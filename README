@@ -1,0 +1,34 @@
+
+Utilities for aufs2
+http://aufs.sf.net
+J. R. Okajima
+
+These utilities are always necessary for aufs2.
+If you forget to install them, your aufs may not work correctly.
+
+Makefile in this tree has some customizable make-variables.
+- KDIR
+  specify your kernel source path if necessary
+- DESTDIR
+  specify your install path if necessary.
+  some commands have to be installed under /sbin.
+
+o /sbin/mount.aufs, /sbin/umount.aufs
+  Helpers for util-linux-ng package. You should NOT invoke them
+  manually. Just install them by "make install".
+
+o /sbin/auplink
+  Handles aufs pseudo-link at remount/unmount time. You can invoke it
+  manually at anytime.
+
+o /usr/bin/auchk
+  Similar to generic fsck. Checks whether a branch is healthy or not
+  from aufs's point of view.
+
+o /etc/default/aufs
+  A library for shell scripts.
+
+
+# Local variables: ;
+# mode: text;
+# End: ;
