@@ -1,4 +1,3 @@
-
 /*
  * Copyright (C) 2005-2009 Junjiro Okajima
  *
