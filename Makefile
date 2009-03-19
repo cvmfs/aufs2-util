@@ -16,7 +16,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301	 USA
 
 ifndef KDIR
-KDIR = /lib/modules/$(uname -r)/build
+KDIR = /lib/modules/$(shell uname -r)/build
 endif
 
 CFLAGS += -I${KDIR}/include
