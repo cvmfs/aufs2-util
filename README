@@ -5,6 +5,8 @@ J. R. Okajima
 
 These utilities are always necessary for aufs2.
 If you forget to install them, your aufs may not work correctly.
+And these are not for aufs1 essentially, except aubrsync. See below in
+detail.
 
 Makefile in this tree has some customizable make-variables.
 - KDIR
@@ -24,6 +26,15 @@ o /sbin/auplink
 o /usr/bin/auchk
   Similar to generic fsck. Checks whether a branch is healthy or not
   from aufs's point of view.
+
+o /usr/bin/aubrsync
+  Move files from the upper writable branch to the lower branch.
+  If you use this script with aufs1, then you need to install aufs.shlib
+  to /usr/lib/aufs.shlib.
+  The development of this script is sponcered by ASUSTek Computer Inc.
+  (http://www.asus.com/).
+  Kindly they agreed that I keep my aufs work as free software as it has
+  been.
 
 o /etc/default/aufs
   A library for shell scripts.

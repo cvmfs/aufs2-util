@@ -50,7 +50,7 @@ etc_default_aufs: c2sh aufs.shlib
 
 install_sbin: File = mount.aufs umount.aufs auplink
 install_sbin: Tgt = ${DESTDIR}/sbin
-install_ubin: File = auchk #aubrsync auctl
+install_ubin: File = auchk aubrsync #auctl
 install_ubin: Tgt = ${DESTDIR}/usr/bin
 install_etc: File = etc_default_aufs
 install_etc: Tgt = ${DESTDIR}/etc/default/aufs
