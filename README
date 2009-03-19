@@ -30,7 +30,8 @@ o /usr/bin/auchk
 o /usr/bin/aubrsync
   Move files from the upper writable branch to the lower branch.
   If you use this script with aufs1, then you need to install aufs.shlib
-  to /usr/lib/aufs.shlib.
+  to /usr/lib/aufs.shlib. Currently only the 20080211 version is tested
+  for aufs1.
   The development of this script is sponcered by ASUSTek Computer Inc.
   (http://www.asus.com/).
   Kindly they agreed that I keep my aufs work as free software as it has
