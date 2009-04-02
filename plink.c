@@ -111,7 +111,7 @@ static int build_array(char *plink_dir)
 	err = 0;
 	dp = opendir(plink_dir);
 	if (!dp)
-		AuFin(plink_dir);
+		AuFin("%s", plink_dir);
 	while ((de = readdir(dp))) {
 		if (!strcmp(de->d_name, ".") || !strcmp(de->d_name, ".."))
 			continue;
@@ -195,7 +195,7 @@ static int ftw_cpup(const char *fname, const struct stat *st, int flags,
 		else
 			err = lchown(fname, -1, -1);
 		if (err)
-			AuFin(fname);
+			AuFin("%s", fname);
 	}
 
 	return FTW_CONTINUE;
@@ -215,7 +215,7 @@ void au_plink_maint(char *path)
 		}
 		dp = opendir(path);
 		if (!dp)
-			AuFin(path);
+			AuFin("%s", path);
 
 		err = ioctl(dirfd(dp), AUFS_CTL_PLINK_MAINT);
 #ifndef DEBUG
@@ -308,7 +308,7 @@ static int do_plink(char *cwd, int cmd, int nbr, char *br[])
 			Dpri("%s\n", na.cur);
 			err = unlink(na.cur);
 			if (err)
-				AuFin(na.cur);
+				AuFin("%s", na.cur);
 			na.cur += strlen(na.cur) + 1;
 		}
 	}

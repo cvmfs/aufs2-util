@@ -38,7 +38,7 @@ static int by_opts(char ***br, int *nbr, char *bropt)
 	errno = EINVAL;
 	//puts(bropt);
 	if (strchr(bropt, ','))
-		AuFin(bropt);
+		AuFin("%s", bropt);
 
 	l = strlen(bropt);
 	p = malloc(l + 2);
@@ -117,9 +117,9 @@ static int by_sysfs(char ***br, int *nbr, char *siopt)
 		sprintf(p, "%d", i);
 		fp = fopen(path, "r");
 		if (!fp)
-			AuFin(path);
+			AuFin("%s", path);
 		if (fgets(buf, sizeof(buf), fp) != buf)
-			AuFin(path);
+			AuFin("%s", path);
 		l = strlen(buf);
 		if (l < 1)
 			AuFin("internal error, %d", l);
@@ -137,7 +137,7 @@ static int by_sysfs(char ***br, int *nbr, char *siopt)
 					AuFin("malloc");
 				rewind(fp);
 				if (fgets(q, sz, fp) != q)
-					AuFin(path);
+					AuFin("%s", path);
 				l = strlen(q);
 			} while (q[l - 1] != '\n');
 			q[l - 1] = 0;

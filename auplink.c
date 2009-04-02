@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
 		cmd = AuPlink_CPUP;
 	else {
 		errno = EINVAL;
-		AuFin(argv[2]);
+		AuFin("%s", argv[2]);
 		cmd = 0; /* never reach here */
 	}
 

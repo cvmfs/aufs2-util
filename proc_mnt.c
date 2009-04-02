@@ -78,7 +78,7 @@ int au_proc_getmntent(char *mntpnt, struct mntent *rent)
 
 	if (!found) {
 		errno = EINVAL;
-		AuFin(mntpnt);
+		AuFin("%s", mntpnt);
 	}
 
 	return 0;
