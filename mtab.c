@@ -22,7 +22,10 @@
  * library for locking /etc/mtab.
  */
 
+/* #include <linux/proc_fs.h> */
+#define PROC_SUPER_MAGIC 0x9fa0
 #include <sys/stat.h>
+#include <sys/statfs.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <fcntl.h>
@@ -139,6 +142,7 @@ int au_update_mtab(char *mntpnt, int do_remount, int do_verbose)
 	pid_t pid;
 	ino_t ino;
 	struct stat st;
+	struct statfs stfs;
 	struct flock flock = {
 		.l_type		= F_WRLCK,
 		.l_whence	= SEEK_SET,
@@ -148,11 +152,9 @@ int au_update_mtab(char *mntpnt, int do_remount, int do_verbose)
 	char pid_file[sizeof(MTab "~.") + 20];
 	FILE *fp;
 
-#if 0
-	err = lstat(MTab, &st);
-	if (S_ISLNK(st.st_mode))
+	err = statfs(MTab, &stfs);
+	if (stfs.f_type == PROC_SUPER_MAGIC)
 		return 0;
-#endif
 
 	snprintf(pid_file, sizeof(pid_file), MTab "~.%d", getpid());
 	fd = open(pid_file, O_RDWR | O_CREAT | O_EXCL,
