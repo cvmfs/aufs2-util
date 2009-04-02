@@ -69,10 +69,10 @@ AuDebug() # 1 | 0 [sec]
 {
 	test $1 -eq 0 && set +x
 	aufs_debug=/sys/module/aufs/parameters/debug
-	if [ -w $aufs_debug ]
+	if [ -f $aufs_debug ]
 	then
 		echo $1 | sudo dd of=$aufs_debug 2> /dev/null
-		test "$2" && sleep $2
+		test $# -eq 2 && sleep $2
 	fi
 	test $1 -eq 1 && set -x
 	true
