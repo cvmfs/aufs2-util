@@ -152,19 +152,19 @@ static int by_sysfs(char ***br, int *nbr, char *siopt)
 	return 0;
 }
 
-#define BrOpt	"br:"
-#define SiOpt	"si="
+#define BrOpt	",br:"
+#define SiOpt	"si"
 int au_br(char ***br, int *nbr, struct mntent *ent)
 {
 	char *p;
 
 	*nbr = 0;
-	p = hasmntopt(ent, BrOpt);
+	p = strstr(ent->mnt_opts, BrOpt);
 	if (p)
 		return by_opts(br, nbr, p + sizeof(BrOpt) - 1);
 	p = hasmntopt(ent, SiOpt);
 	if (p)
-		return by_sysfs(br, nbr, p + sizeof(SiOpt) - 1);
+		return by_sysfs(br, nbr, p + sizeof(SiOpt));
 
 	/* broken opts */
 	AuFin("internal error, %s", ent->mnt_opts);
