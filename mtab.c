@@ -160,13 +160,13 @@ int au_update_mtab(char *mntpnt, int do_remount, int do_verbose)
 	fd = open(pid_file, O_RDWR | O_CREAT | O_EXCL,
 		  S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 	if (fd < 0)
-		AuFin(pid_file);
+		AuFin("%s", pid_file);
 	err = fcntl(fd, F_SETLK, &flock);
 	if (err)
-		AuFin(pid_file);
+		AuFin("%s", pid_file);
 	fp = fdopen(fd, "r+");
 	if (!fp)
-		AuFin(pid_file);
+		AuFin("%s", pid_file);
 
 	pid = fork();
 	if (!pid) {

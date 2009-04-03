@@ -186,7 +186,7 @@ int main(int argc, char *argv[])
 		AuFin(".");
 	err = chdir(mntpnt);
 	if (err)
-		AuFin(mntpnt);
+		AuFin("%s", mntpnt);
 	cwd = getcwd(NULL, 0); /* glibc */
 	if (!cwd)
 		AuFin("getcwd");
