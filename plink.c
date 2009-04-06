@@ -289,7 +289,7 @@ static int do_plink(char *cwd, int cmd, int nbr, char *br[])
 	if (cmd == AuPlink_LIST) {
 		ia.p = ia.o;
 		for (i = 0; i < ia.nino; i++)
-			printf("%llu ", *ia.cur++);
+			printf("%llu ", (unsigned long long)*ia.cur++);
 		putchar('\n');
 	}
 
