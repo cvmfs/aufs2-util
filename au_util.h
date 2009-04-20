@@ -22,6 +22,11 @@
 #include <errno.h>
 #include <error.h>
 
+/*
+ * error_at_line() is decleared with (__printf__, 5, 6) attribute,
+ * and our compiler produces a warning unless args is not given.
+ * __VA_ARGS__ does not help the attribute.
+ */
 #define AuFin(fmt, args...) \
 	error_at_line(errno, errno, __FILE__, __LINE__, fmt, ##args)
 
@@ -51,11 +56,12 @@ void au_plink_maint(char *path);
 void au_print_ent(struct mntent *ent);
 int au_update_mtab(char *mntpnt, int do_remount, int do_verbose);
 
-#define _Dpri(fmt, args...)	printf("%s:%d:" fmt, __func__, __LINE__, ##args)
+#define _Dpri(fmt, ...)		printf("%s:%d:" fmt, \
+				       __func__, __LINE__, ##__VA_ARGS__)
 #ifdef DEBUG
-#define Dpri(fmt, args...)	_Dpri(fmt, ##args)
+#define Dpri(fmt, ...)		_Dpri(fmt, ##__VA_ARGS__)
 #else
-#define Dpri(fmt, args...)	do { } while(0)
+#define Dpri(fmt, ...)		do { } while(0)
 #endif
 
 #endif /* __AUFS_UTIL_H__ */
