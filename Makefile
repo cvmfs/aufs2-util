@@ -55,6 +55,7 @@ install_ubin: Tgt = ${DESTDIR}/usr/bin
 install_etc: File = etc_default_aufs
 install_etc: Tgt = ${DESTDIR}/etc/default/aufs
 install_sbin install_ubin install_etc: ${File}
+	install -d ${Tgt}
 	install -m 755 -o root -g root -p ${File} ${Tgt}
 install: install_sbin install_ubin install_etc
 
