@@ -23,7 +23,8 @@ CFLAGS += -I${KDIR}/include
 CFLAGS += -O -Wall
 LDFLAGS += -static -s
 
-Cmd = umount.aufs auchk #aubrsync
+Cmd = umount.aufs auchk aubrsync
+Man = aufs.5
 Etc = etc_default_aufs
 Bin = auplink mount.aufs #auctl
 BinObj = $(addsuffix .o, ${Bin})
@@ -31,7 +32,7 @@ Lib = libau.a
 LibObj = proc_mnt.o br.o plink.o mtab.o
 LibHdr = au_util.h
 
-all: ${Bin} ${Etc}
+all: ${Man} ${Bin} ${Etc}
 
 ${Bin}: LDLIBS = -L. -lau
 ${BinObj}: %.o: %.c ${LibHdr} ${Lib}
@@ -46,20 +47,35 @@ etc_default_aufs: c2sh aufs.shlib
 	./c2sh >> $@
 	echo >> $@
 	sed -e '0,/^$$/d' aufs.shlib >> $@
-.INTERMEDIATE: c2sh
 
+aufs.5: aufs.in.5 c2tmac
+	${RM} $@
+	./c2tmac > $@
+	awk '{ \
+		gsub(/\140[^\047]*\047/, "\\[oq]&\\[cq]"); \
+		gsub(/\\\[oq\]\140/, "\\[oq]"); \
+		gsub(/\047\\\[cq\]/, "\\[cq]"); \
+		gsub(/\047/, "\\[aq]"); \
+		print; \
+	}' aufs.in.5 >> $@
+	chmod a-w $@
+
+.INTERMEDIATE: c2sh c2tmac
+
+install_man: File = aufs.5
+install_man: Tgt = ${DESTDIR}/usr/share/man/man5
 install_sbin: File = mount.aufs umount.aufs auplink
 install_sbin: Tgt = ${DESTDIR}/sbin
 install_ubin: File = auchk aubrsync #auctl
 install_ubin: Tgt = ${DESTDIR}/usr/bin
 install_etc: File = etc_default_aufs
 install_etc: Tgt = ${DESTDIR}/etc/default/aufs
-install_sbin install_ubin install_etc: ${File}
+install_man install_sbin install_ubin install_etc: ${File}
 	install -d ${Tgt}
 	install -m 755 -o root -g root -p ${File} ${Tgt}
-install: install_sbin install_ubin install_etc
+install: install_man install_sbin install_ubin install_etc
 
 clean:
-	${RM} ${Lib} ${Bin} ${Etc} ${LibObj} ${BinObj} *~
+	${RM} ${Lib} ${Man} ${Bin} ${Etc} ${LibObj} ${BinObj} *~
 
 -include priv.mk
