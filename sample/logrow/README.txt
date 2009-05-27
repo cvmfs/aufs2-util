@@ -22,7 +22,3 @@ writable branch.
 
 
 Enjoy!
-
-# Local variables: ;
-# mode: text;
-# End: ;
