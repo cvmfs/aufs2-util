@@ -118,6 +118,9 @@ is mapping a file by mmap(2)
 on the branch, the process may or may not
 be able to modify its mapped memory region after modifying branch
 permission flags.
+Additioanlly when you enable CONFIG_IMA (in linux-2.6.30 and later), IMA
+may produce some wrong messages. But this is equivalent when the
+filesystem is changed `ro' in emergency.
 (cf. Branch Syntax).
 .
 .TP
