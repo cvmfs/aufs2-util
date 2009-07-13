@@ -37,7 +37,7 @@
 #include <linux/aufs_type.h>
 #include "au_util.h"
 
-enum { Remount, Bind, Update, Verbose, AuFlush, LastOpt };
+enum { Remount, Bind, Fake, Update, Verbose, AuFlush, LastOpt };
 static void test_opts(char opts[], unsigned char flags[])
 {
 	int c;
@@ -117,6 +117,8 @@ static void do_mount(char *dev, char *mntpnt, int argc, char *argv[],
 	a = av;
 	*a++ = "mount";
 	*a++ = "-i";
+	if (flags[Fake])
+		*a++ = "-f";
 	if (!flags[Bind] || !flags[Update])
 		*a++ = "-n";
 	if (flags[Bind] && flags[Verbose])
@@ -163,8 +165,11 @@ int main(int argc, char *argv[])
 	/* mount(8) always passes the arguments in this order */
 	dev = argv[1];
 	mntpnt = argv[2];
-	while ((c = getopt(argc - 2, argv + 2, "nvo:")) != -1) {
+	while ((c = getopt(argc - 2, argv + 2, "fnvo:")) != -1) {
 		switch (c) {
+		case 'f':
+			flags[Fake] = 1;
+			break;
 		case 'n':
 			flags[Update] = 0;
 			break;
@@ -209,7 +214,7 @@ int main(int argc, char *argv[])
 		if (flags[Bind])
 			AuFin("both of remount and bind are specified");
 		flags[AuFlush] = test_flush(opts);
-		if (flags[AuFlush]) {
+		if (flags[AuFlush] /* && !flags[Fake] */) {
 			err = au_plink(cwd, AuPlink_FLUSH, 1, 1);
 			if (err)
 				AuFin(NULL);
