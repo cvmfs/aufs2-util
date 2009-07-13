@@ -62,17 +62,21 @@ aufs.5: aufs.in.5 c2tmac
 
 .INTERMEDIATE: c2sh c2tmac
 
-install_man: File = aufs.5
-install_man: Tgt = ${DESTDIR}/usr/share/man/man5
 install_sbin: File = mount.aufs umount.aufs auplink
 install_sbin: Tgt = ${DESTDIR}/sbin
 install_ubin: File = auchk aubrsync #auctl
 install_ubin: Tgt = ${DESTDIR}/usr/bin
-install_etc: File = etc_default_aufs
-install_etc: Tgt = ${DESTDIR}/etc/default/aufs
-install_man install_sbin install_ubin install_etc: ${File}
+install_sbin install_ubin: ${File}
 	install -d ${Tgt}
 	install -m 755 -o root -g root -p ${File} ${Tgt}
+install_man: File = aufs.5
+install_man: Tgt = ${DESTDIR}/usr/share/man/man5/aufs.5
+install_etc: File = etc_default_aufs
+install_etc: Tgt = ${DESTDIR}/etc/default/aufs
+install_man install_etc: ${File}
+	install -d $(dir ${Tgt})
+	install -m 644 -o root -g root -p -T ${File} ${Tgt}
+
 install: install_man install_sbin install_ubin install_etc
 
 clean:
