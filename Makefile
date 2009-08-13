@@ -21,25 +21,38 @@ endif
 
 CFLAGS += -I${KDIR}/include
 CFLAGS += -O -Wall
-LDFLAGS += -static -s
 
 Cmd = umount.aufs auchk aubrsync
 Man = aufs.5
 Etc = etc_default_aufs
 Bin = auplink mount.aufs #auctl
 BinObj = $(addsuffix .o, ${Bin})
-Lib = libau.a
-LibObj = proc_mnt.o br.o plink.o mtab.o
-LibHdr = au_util.h
+LibSo = libau.so
+LibSoObj = rdu.o
+LibSoHdr = compat.h
+LibUtil = libautil.a
+LibUtilObj = proc_mnt.o br.o plink.o mtab.o
+LibUtilHdr = au_util.h
 
-all: ${Man} ${Bin} ${Etc}
+all: ${Man} ${Bin} ${Etc} #${LibSo}
 
-${Bin}: LDLIBS = -L. -lau
-${BinObj}: %.o: %.c ${LibHdr} ${Lib}
+${Bin}: LDFLAGS += -static -s
+${Bin}: LDLIBS = -L. -lautil
+${BinObj}: %.o: %.c ${LibUtilHdr} ${LibUtil}
 
-${LibObj}: %.o: %.c ${LibHdr}
-${Lib}: ${LibObj}
-	${AR} r $@ $^
+${LibUtilObj}: %.o: %.c ${LibUtilHdr}
+${LibUtil}: ${LibUtil}(${LibUtilObj})
+
+${LibSoObj}: CFLAGS += -fPIC
+${LibSoObj}: %.o: %.c ${LibSolHdr}
+
+# in order to reuse the default rule
+Dummy = $(basename $(word 1,${LibSoObj}))
+${Dummy}: LDFLAGS += --shared
+${Dummy}: LDLIBS += -ldl -lpthread
+${Dummy}: ${LibSoObj}
+${LibSo}: ${Dummy}
+	ln -f $< $@
 
 etc_default_aufs: c2sh aufs.shlib
 	${RM} $@
@@ -66,20 +79,25 @@ install_sbin: File = mount.aufs umount.aufs auplink
 install_sbin: Tgt = ${DESTDIR}/sbin
 install_ubin: File = auchk aubrsync #auctl
 install_ubin: Tgt = ${DESTDIR}/usr/bin
-install_sbin install_ubin: ${File}
-	install -d ${Tgt}
-	install -m 755 -o root -g root -p ${File} ${Tgt}
 install_man: File = aufs.5
-install_man: Tgt = ${DESTDIR}/usr/share/man/man5/aufs.5
+install_man: Tgt = ${DESTDIR}/usr/share/man/man5
+install_ulib: Opt = -s
+install_ulib: File = ${LibSo}
+install_ulib: Tgt = ${DESTDIR}/ulib
+install_sbin install_ubin install_man install_ulib: ${File}
+	install -d ${Tgt}
+	install -m 755 -o root -g root -p ${Opt} ${File} ${Tgt}
 install_etc: File = etc_default_aufs
 install_etc: Tgt = ${DESTDIR}/etc/default/aufs
-install_man install_etc: ${File}
+install_etc: ${File}
 	install -d $(dir ${Tgt})
 	install -m 644 -o root -g root -p -T ${File} ${Tgt}
 
+# do not inlcude install_ulib here
 install: install_man install_sbin install_ubin install_etc
 
 clean:
-	${RM} ${Lib} ${Man} ${Bin} ${Etc} ${LibObj} ${BinObj} *~
+	${RM} ${Man} ${Bin} ${Etc} ${LibUtil} ${LibSo} *~
+	${RM} ${BinObj} ${LibUtilObj} ${LibSoObj} ${Dummy}
 
 -include priv.mk
