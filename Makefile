@@ -43,7 +43,7 @@ ${BinObj}: %.o: %.c ${LibUtilHdr} ${LibUtil}
 ${LibUtilObj}: %.o: %.c ${LibUtilHdr}
 ${LibUtil}: ${LibUtil}(${LibUtilObj})
 
-${LibSoObj}: CFLAGS += -fPIC
+${LibSoObj}: CFLAGS += -fPIC -DNDEBUG
 ${LibSoObj}: %.o: %.c ${LibSolHdr}
 
 # in order to reuse the default rule
