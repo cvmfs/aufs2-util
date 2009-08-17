@@ -52,6 +52,7 @@ struct rdu {
 
 	unsigned long npos, idx;
 	struct au_rdu_ent **pos;
+	unsigned long *ino;
 
 	unsigned long nent, sz;
 	struct au_rdu_ent *ent;
@@ -215,6 +216,7 @@ static struct rdu *rdu_new(int fd)
 		rdu_rwlock_init(p);
 		p->fd = fd;
 		p->sz = BUFSIZ;
+		p->ino = NULL;
 		p->ent = malloc(BUFSIZ);
 		if (p->ent) {
 			err = rdu_append(p);
@@ -270,9 +272,11 @@ static void rdu_free(int fd)
 	if (p) {
 		free(p->ent);
 		free(p->pos);
+		free(p->ino);
 		p->fd = -1;
 		p->ent = NULL;
 		p->pos = NULL;
+		p->ino = NULL;
 		rdu_unlock(p);
 	}
 }
@@ -292,7 +296,7 @@ static int rdu_do_store(int dirfd, struct au_rdu_ent *ent,
 	err = fstatat(dirfd, ent->name, &st, AT_SYMLINK_NOFOLLOW);
 	ent->name[ent->nlen] = c;
 	if (!err) {
-		ent->ino = st.st_ino;
+		p->ino[p->idx] = st.st_ino;
 		pos[p->idx++] = ent;
 	} else {
 		DPri("err %d\n", err);
@@ -447,11 +451,14 @@ static int rdu_merge(struct rdu *p)
 	p->pos = malloc(sizeof(*p->pos) * p->npos);
 	if (!p->pos)
 		goto out;
+	p->ino = malloc(sizeof(*p->ino) * p->npos);
+	if (!p->ino)
+		goto out_free;
 
 	/* pipe(2) may not be scheduled well in linux-2.6.23 and earlier */
 	err = pipe(fds);
 	if (err)
-		goto out_free;
+		goto out_free2;
 
 	arg.pipefd = fds[0];
 	arg.p = p;
@@ -479,17 +486,23 @@ static int rdu_merge(struct rdu *p)
 #ifndef RduLocalTest
 	pthread_join(th, NULL);
 #endif
-	p->npos = p->idx;
-	t = realloc(p->pos, sizeof(*p->pos) * p->npos);
+	p->npos = p->idx - 1;
+	/* t == NULL is not an error */
+	t = realloc(p->pos, sizeof(*p->pos) * p->idx);
 	if (t)
 		p->pos = t;
-	/* t == NULL is not an error */
+	t = realloc(p->ino, sizeof(*p->ino) * p->idx);
+	if (t)
+		p->ino = t;
 
  out_close:
 	close(fds[1]);
 	close(fds[0]);
 	if (!err)
 		goto out; /* success */
+ out_free2:
+	free(p->ino);
+	p->ino = NULL;
  out_free:
 	free(p->pos);
 	p->pos = NULL;
@@ -549,7 +562,7 @@ static int rdu_pos(struct dirent *de, struct rdu *p, long pos)
 	err = -1;
 	if (pos <= p->npos) {
 		ent = p->pos[pos];
-		de->d_ino = ent->ino;
+		de->d_ino = p->ino[pos];
 		de->d_off = pos;
 		de->d_reclen = sizeof(*ent) + ent->nlen;
 		de->d_type = ent->type;
@@ -605,10 +618,8 @@ static int rdu_readdir(DIR *dir, struct dirent *de, struct dirent **rde)
 	long pos;
 	struct statfs stfs;
 
-	if (rde)
-		*rde = NULL;
-
 	errno = EBADF;
+	*rde = NULL;
 	fd = dirfd(dir);
 	err = fd;
 	if (fd < 0)
@@ -648,6 +659,7 @@ static int rdu_readdir(DIR *dir, struct dirent *de, struct dirent **rde)
 			*rde = de;
 			seekdir(dir, pos + 1);
 		}
+		errno = 0;
 	} else if (!de) {
 		if (!rdu_dl_readdir()) {
 			err = 0;
