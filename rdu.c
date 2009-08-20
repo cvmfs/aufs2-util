@@ -458,8 +458,10 @@ static int rdu_readdir(DIR *dir, struct dirent *de, struct dirent **rde)
 	long pos;
 	struct statfs stfs;
 
+	if (rde)
+		*rde = NULL;
+
 	errno = EBADF;
-	*rde = NULL;
 	fd = dirfd(dir);
 	err = fd;
 	if (fd < 0)
@@ -469,6 +471,7 @@ static int rdu_readdir(DIR *dir, struct dirent *de, struct dirent **rde)
 	if (err)
 		goto out;
 
+	errno = 0;
 	if (stfs.f_type == AUFS_SUPER_MAGIC) {
 		err = rdu_lib_init();
 		if (err)
@@ -481,20 +484,40 @@ static int rdu_readdir(DIR *dir, struct dirent *de, struct dirent **rde)
 		pos = telldir(dir);
 		if (!pos || !p->npos) {
 			err = rdu_init(p);
-			rdu_unlock(p);
+			if (!err && !de && !p->de) {
+				p->de = malloc(sizeof(*p->de));
+				if (!p->de) {
+					int e = errno;
+					rdu_free(p);
+					errno = e;
+					err = -1;
+					goto out;
+				}
+			}
+			if (err) {
+				rdu_unlock(p);
+				goto out;
+			}
 		}
-		if (err)
-			goto out;
 
-		rdu_read_lock(p);
-		if (!de)
+		rdu_lib_lock();
+		rdu_dgrade_lock(p);
+		rdu_lib_unlock();
+		if (!de) {
 			de = p->de;
+			if (!de) {
+				rdu_unlock(p);
+				errno = EINVAL;
+				err = -1;
+				goto out;
+			}
+		}
 		err = rdu_pos(de, p, pos);
-		rdu_unlock(p);
 		if (!err) {
 			*rde = de;
 			seekdir(dir, pos + 1);
 		}
+		rdu_unlock(p);
 		errno = 0;
 	} else if (!de) {
 		if (!rdu_dl_readdir()) {
