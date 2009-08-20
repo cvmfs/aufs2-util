@@ -45,6 +45,30 @@ static int rdu_cur, rdu_lim = RDU_STEP;
 
 /* ---------------------------------------------------------------------- */
 
+static int rdu_getent(struct rdu *p, struct aufs_rdu *param)
+{
+	int err;
+
+	DPri("param{%llu, %p, (%u, %u) | %u | %llu, %u, %d |"
+	     " %llu, %d, 0x%x, %u}\n",
+	     param->sz, param->ent.e,
+	     param->verify[0], param->verify[1],
+	     param->blk,
+	     param->rent, param->shwh, param->full,
+	     param->cookie.h_pos, param->cookie.bindex, param->cookie.flags,
+	     param->cookie.generation);
+
+	err = ioctl(p->fd, AUFS_CTL_RDU, param);
+	if (err && errno == ENOENT) {
+		/* follows the behaviour of glibc */
+		errno = 0;
+	}
+
+	return err;
+}
+
+/* ---------------------------------------------------------------------- */
+
 #ifdef _REENTRANT
 pthread_mutex_t rdu_lib_mtx = PTHREAD_MUTEX_INITIALIZER;
 #endif
@@ -308,43 +332,65 @@ static int rdu_merge(struct rdu *p)
 static int rdu_init(struct rdu *p)
 {
 	int err;
+	unsigned long used;
 	struct aufs_rdu param;
 	char *t;
+	struct au_rdu_ent *e;
 
 	memset(&param, 0, sizeof(param));
-	param.ent = p->ent;
+	param.verify[AufsCtlRduV_SZ] = sizeof(param);
+	param.verify[AufsCtlRduV_SZ_PTR] = sizeof(t);
 	param.sz = p->sz;
+	param.ent = p->ent;
+	if (!param.ent.e) {
+		err = -1;
+		param.ent.e = malloc(param.sz);
+		if (!param.ent.e)
+			goto out;
+		p->ent = param.ent;
+	}
 	t = getenv("AUFS_RDU_BLK");
 	if (t)
 		param.blk = strtoul(t + sizeof("AUFS_RDU_BLK"), NULL, 0);
 
-	do {
-		err = ioctl(p->fd, AUFS_CTL_RDU, &param);
-		if (err > 0) {
-			p->npos += err;
-			if (!param.full)
-				continue;
+	p->npos = 0;
+	while (1) {
+		err = rdu_getent(p, &param);
+		if (err || !param.rent)
+			break;
 
-			assert(param.blk);
-			t = realloc(p->ent.e, p->sz + param.blk);
-			if (t) {
-				param.sz = param.blk;
-				param.ent.e = (void *)(t + p->sz);
-				p->ent.e = (void *)t;
-				p->sz += param.blk;
-			} else
-				err = -1;
-		}
-	} while (err > 0);
+		p->npos += param.rent;
+		if (!param.full)
+			continue;
+
+		assert(param.blk);
+		e = realloc(p->ent.e, p->sz + param.blk);
+		if (e) {
+			used = param.tail.ul - param.ent.ul;
+			param.sz += param.blk - used;
+			used += param.ent.ul - p->ent.ul;
+			p->ent.e = e;
+			param.ent.ul = p->ent.ul + used;
+			p->sz += param.blk;
+		} else
+			err = -1;
+	}
+
 	p->shwh = param.shwh;
 	if (!err)
 		err = rdu_merge(p);
+	if (!err) {
+		param.ent = p->ent;
+		param.nent = p->npos;
+		err = ioctl(p->fd, AUFS_CTL_RDU_INO, &param);
+	}
 
 	if (err) {
 		free(p->ent.e);
 		p->ent.e = NULL;
 	}
 
+ out:
 	return err;
 }
 
@@ -397,7 +443,7 @@ static int rdu_dl_##sym(void) \
 RduDlFunc(readdir);
 RduDlFunc(closedir);
 
-#ifdef AuRDU_REENTRANT
+#ifdef _REENTRANT
 RduDlFunc(readdir_r);
 #else
 #define rdu_dl_readdir_r()	1
@@ -475,8 +521,8 @@ struct dirent *readdir(DIR *dir)
 	return de;
 }
 
-#ifdef AuRDU_REENTRANT
-int readdir_r(DIR *dirp, struct dirent *de, struct dirent **rde)
+#ifdef _REENTRANT
+int readdir_r(DIR *dir, struct dirent *de, struct dirent **rde)
 {
 	return rdu_readdir(dir, de, rde);
 }
