@@ -59,10 +59,9 @@ static int rdu_getent(struct rdu *p, struct aufs_rdu *param)
 	     param->cookie.generation);
 
 	err = ioctl(p->fd, AUFS_CTL_RDU, param);
-	if (err && errno == ENOENT) {
-		/* follows the behaviour of glibc */
+	/* follow the behaviour of glibc */
+	if (err && errno == ENOENT)
 		errno = 0;
-	}
 
 	return err;
 }
@@ -579,23 +578,11 @@ int closedir(DIR *dir)
 }
 
 #if 0
-extern DIR *opendir (__const char *__name) __nonnull ((1));
-extern int closedir (DIR *__dirp) __nonnull ((1));
-extern struct dirent *__REDIRECT (readdir, (DIR *__dirp), readdir64)
-     __nonnull ((1));
 extern struct dirent64 *readdir64 (DIR *__dirp) __nonnull ((1));
-extern int readdir_r (DIR *__restrict __dirp,
-		      struct dirent *__restrict __entry,
-		      struct dirent **__restrict __result)
-     __nonnull ((1, 2, 3));
 extern int readdir64_r (DIR *__restrict __dirp,
 			struct dirent64 *__restrict __entry,
 			struct dirent64 **__restrict __result)
      __nonnull ((1, 2, 3));
-extern void rewinddir (DIR *__dirp) __THROW __nonnull ((1));
-extern void seekdir (DIR *__dirp, long int __pos) __THROW __nonnull ((1));
-extern long int telldir (DIR *__dirp) __THROW __nonnull ((1));
-extern int dirfd (DIR *__dirp) __THROW __nonnull ((1));
 extern int scandir (__const char *__restrict __dir,
 		    struct dirent ***__restrict __namelist,
 		    int (*__selector) (__const struct dirent *),
@@ -606,14 +593,6 @@ extern int scandir64 (__const char *__restrict __dir,
 		      int (*__selector) (__const struct dirent64 *),
 		      int (*__cmp) (__const void *, __const void *))
      __nonnull ((1, 2));
-extern int alphasort (__const void *__e1, __const void *__e2)
-     __THROW __attribute_pure__ __nonnull ((1, 2));
-extern int alphasort64 (__const void *__e1, __const void *__e2)
-     __THROW __attribute_pure__ __nonnull ((1, 2));
-extern int versionsort (__const void *__e1, __const void *__e2)
-     __THROW __attribute_pure__ __nonnull ((1, 2));
-extern int versionsort64 (__const void *__e1, __const void *__e2)
-     __THROW __attribute_pure__ __nonnull ((1, 2));
 extern __ssize_t getdirentries (int __fd, char *__restrict __buf,
 				size_t __nbytes,
 				__off_t *__restrict __basep)
