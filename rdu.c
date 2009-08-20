@@ -48,37 +48,6 @@ static int rdu_cur, rdu_lim = RDU_STEP;
 
 /* ---------------------------------------------------------------------- */
 
-/* #define RduLocalTest */
-#ifdef RduLocalTest
-static int rdu_test_data(struct rdu *p, int err)
-{
-	struct au_rdu_ent *e = p->ent;
-	static int i;
-
-	if (!i++) {
-		err = 3;
-		e->ino = e->type = e->nlen = 1;
-		strcpy(e->name, ".");
-		e += au_rdu_len(e->nlen);
-		e->ino = e->type = e->nlen = 2;
-		strcpy(e->name, "..");
-		e += au_rdu_len(e->nlen);
-		e->ino = e->type = e->nlen = 3;
-		strcpy(e->name, "foo");
-	} else
-		err = 0;
-
-	return err;
-}
-#else
-static int rdu_test_data(struct rdu *p, int err)
-{
-	return err;
-}
-#endif
-
-/* ---------------------------------------------------------------------- */
-
 #ifdef AuRDU_REENTRANT
 pthread_mutex_t rdu_lib_mtx = PTHREAD_MUTEX_INITIALIZER;
 #endif
@@ -263,11 +232,6 @@ static void *rdu_thread(void *_arg)
 
 static int rdu_store(struct rdu *p, struct au_rdu_ent *ent, int pipefd)
 {
-#ifdef RduLocalTest
-	if (ent)
-		return rdu_do_store(p->fd, ent, p->pos, p);
-	return 0;
-#else
 	ssize_t ssz;
 
 	//DPri("%p\n", ent);
@@ -275,7 +239,6 @@ static int rdu_store(struct rdu *p, struct au_rdu_ent *ent, int pipefd)
 	DPri("ssz %zd\n", ssz);
 	//sleep(1);
 	return ssz != sizeof(ent);
-#endif
 }
 
 /* ---------------------------------------------------------------------- */
@@ -379,9 +342,7 @@ static int rdu_merge(struct rdu *p)
 
 	arg.pipefd = fds[0];
 	arg.p = p;
-#ifndef RduLocalTest
 	err = pthread_create(&th, NULL, rdu_thread, &arg);
-#endif
 	if (err)
 		goto out_close;
 
@@ -400,9 +361,7 @@ static int rdu_merge(struct rdu *p)
 	tdestroy(p->real, rdu_tfree);
 	tdestroy(p->wh, rdu_tfree);
 
-#ifndef RduLocalTest
 	pthread_join(th, NULL);
-#endif
 	p->npos = p->idx - 1;
 	/* t == NULL is not an error */
 	t = realloc(p->pos, sizeof(*p->pos) * p->idx);
@@ -436,7 +395,6 @@ static int rdu_init(struct rdu *p)
 
 	do {
 		err = ioctl(p->fd, AUFS_CTL_RDU, &param);
-		err = rdu_test_data(p, err);
 		if (err > 0) {
 			p->npos += err;
 			if (!param.full)
@@ -540,11 +498,7 @@ static int rdu_readdir(DIR *dir, struct dirent *de, struct dirent **rde)
 	if (err)
 		goto out;
 
-	if (
-#ifdef RduLocalTest
-		1 ||
-#endif
-		stfs.f_type == AUFS_SUPER_MAGIC) {
+	if (stfs.f_type == AUFS_SUPER_MAGIC) {
 		err = rdu_lib_init();
 		if (err)
 			goto out;
