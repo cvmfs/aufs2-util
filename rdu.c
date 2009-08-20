@@ -103,10 +103,10 @@ static int rdu_append(struct rdu *p)
 	rdu_lib_must_lock();
 
 	err = 0;
-	if (rdu_cur < rdu_lim - 1)
+	if (rdu_cur <= rdu_lim - 1)
 		rdu[rdu_cur++] = p;
 	else {
-		t = realloc(rdu, rdu_lim + RDU_STEP * sizeof(*rdu));
+		t = realloc(rdu, (rdu_lim + RDU_STEP) * sizeof(*rdu));
 		if (t) {
 			rdu = t;
 			rdu_lim += RDU_STEP;
@@ -131,6 +131,8 @@ static struct rdu *rdu_new(int fd)
 	if (p) {
 		rdu_rwlock_init(p);
 		p->fd = fd;
+		p->de = NULL;
+		p->pos = NULL;
 		p->sz = BUFSIZ;
 		p->ent.e = NULL;
 		err = rdu_append(p);
@@ -177,19 +179,18 @@ static struct rdu *rdu_buf_lock(int fd)
 	return p;
 }
 
-static void rdu_free(int fd)
+static void rdu_free(struct rdu *p)
 {
-	struct rdu *p;
+	assert(p);
 
-	p = rdu_buf_lock(fd);
-	if (p) {
-		free(p->ent.e);
-		free(p->pos);
-		p->fd = -1;
-		p->ent.e = NULL;
-		p->pos = NULL;
-		rdu_unlock(p);
-	}
+	p->fd = -1;
+	free(p->pos);
+	free(p->ent.e);
+	free(p->de);
+	p->de = NULL;
+	p->pos = NULL;
+	p->ent.e = NULL;
+	rdu_unlock(p);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -532,6 +533,7 @@ int closedir(DIR *dir)
 {
 	int err, fd;
 	struct statfs stfs;
+	struct rdu *p;
 
 	err = -1;
 	errno = EBADF;
@@ -542,8 +544,11 @@ int closedir(DIR *dir)
 	if (err)
 		goto out;
 
-	if (stfs.f_type == AUFS_SUPER_MAGIC)
-		rdu_free(fd);
+	if (stfs.f_type == AUFS_SUPER_MAGIC) {
+		p = rdu_buf_lock(fd);
+		if (p)
+			rdu_free(p);
+	}
 	if (!rdu_dl_closedir())
 		err = real_closedir(dir);
 
