@@ -38,28 +38,9 @@
 #include <unistd.h>
 
 #include "compat.h"
+#include "rdu.h"
 
 /* ---------------------------------------------------------------------- */
-
-struct rdu {
-#ifdef AuRDU_REENTRANT
-	pthread_rwlock_t lock;
-#else
-	struct dirent de;
-#endif
-
-	int fd;
-
-	unsigned long npos, idx;
-	struct au_rdu_ent **pos;
-	unsigned long *ino;
-
-	unsigned long nent, sz;
-	struct au_rdu_ent *ent;
-
-	int shwh;
-	struct au_rdu_ent *real, *wh;
-};
 
 static struct rdu **rdu;
 #define RDU_STEP 8
@@ -96,65 +77,10 @@ static int rdu_test_data(struct rdu *p, int err)
 }
 #endif
 
-/* #define RduDebug */
-#ifdef RduDebug
-#define DPri(fmt, args...)	fprintf(stderr, "%s:%d: " fmt, \
-					__func__, __LINE__, ##args)
-#else
-#define DPri(fmt, args...)	do {} while (0)
-#endif
-
 /* ---------------------------------------------------------------------- */
 
 #ifdef AuRDU_REENTRANT
-static void rdu_rwlock_init(struct rdu *p)
-{
-	pthread_rwlock_init(&p->lock);
-}
-
-static void rdu_read_lock(struct rdu *p)
-{
-	pthread_rwlock_rdlock(&p->lock);
-}
-
-static void rdu_write_lock(struct rdu *p)
-{
-	pthread_rwlock_wrlock(&p->lock);
-}
-
-static void rdu_unlock(struct rdu *p)
-{
-	pthread_rwlock_unlock(&p->lock);
-}
-
-static pthread_mutex_t rdu_lib_mtx = PTHREAD_MUTEX_INITIALIZER;
-#define rdu_lib_lock()		pthread_mutex_lock(&rdu_lib_mtx)
-#define rdu_lib_unlock()	pthread_mutex_unlock(&rdu_lib_mtx)
-#define rdu_lib_must_lock()	assert(pthread_mutex_trylock(&rdu_lib_mtx))
-#else
-static void rdu_rwlock_init(struct rdu *p)
-{
-	/* empty */
-}
-
-static void rdu_read_lock(struct rdu *p)
-{
-	/* empty */
-}
-
-static void rdu_write_lock(struct rdu *p)
-{
-	/* empty */
-}
-
-static void rdu_unlock(struct rdu *p)
-{
-	/* empty */
-}
-
-#define rdu_lib_lock()		do {} while(0)
-#define rdu_lib_unlock()	do {} while(0)
-#define rdu_lib_must_lock()	do {} while(0)
+pthread_mutex_t rdu_lib_mtx = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
 /*
@@ -216,13 +142,10 @@ static struct rdu *rdu_new(int fd)
 		rdu_rwlock_init(p);
 		p->fd = fd;
 		p->sz = BUFSIZ;
-		p->ino = NULL;
-		p->ent = malloc(BUFSIZ);
-		if (p->ent) {
-			err = rdu_append(p);
-			if (!err)
-				goto out; /* success */
-		}
+		p->ent.e = NULL;
+		err = rdu_append(p);
+		if (!err)
+			goto out; /* success */
 	}
 	free(p);
 	p = NULL;
@@ -270,13 +193,11 @@ static void rdu_free(int fd)
 
 	p = rdu_buf_lock(fd);
 	if (p) {
-		free(p->ent);
+		free(p->ent.e);
 		free(p->pos);
-		free(p->ino);
 		p->fd = -1;
-		p->ent = NULL;
+		p->ent.e = NULL;
 		p->pos = NULL;
-		p->ino = NULL;
 		rdu_unlock(p);
 	}
 }
@@ -296,7 +217,6 @@ static int rdu_do_store(int dirfd, struct au_rdu_ent *ent,
 	err = fstatat(dirfd, ent->name, &st, AT_SYMLINK_NOFOLLOW);
 	ent->name[ent->nlen] = c;
 	if (!err) {
-		p->ino[p->idx] = st.st_ino;
 		pos[p->idx++] = ent;
 	} else {
 		DPri("err %d\n", err);
@@ -444,21 +364,18 @@ static int rdu_merge(struct rdu *p)
 	pthread_t th;
 	int fds[2];
 	struct rdu_thread_arg arg;
-	struct au_rdu_ent *ent;
+	union au_rdu_ent_ul ent;
 	void *t;
 
 	err = -1;
 	p->pos = malloc(sizeof(*p->pos) * p->npos);
 	if (!p->pos)
 		goto out;
-	p->ino = malloc(sizeof(*p->ino) * p->npos);
-	if (!p->ino)
-		goto out_free;
 
 	/* pipe(2) may not be scheduled well in linux-2.6.23 and earlier */
 	err = pipe(fds);
 	if (err)
-		goto out_free2;
+		goto out_free;
 
 	arg.pipefd = fds[0];
 	arg.p = p;
@@ -472,12 +389,12 @@ static int rdu_merge(struct rdu *p)
 	p->wh = NULL;
 	ent = p->ent;
 	for (ul = 0; !err && ul < p->npos; ul++) {
-		if (ent->nlen <= AUFS_WH_PFX_LEN
-		    || strncmp(ent->name, AUFS_WH_PFX, AUFS_WH_PFX_LEN))
-			err = rdu_ent_append(p, ent, fds[1]);
+		if (ent.e->nlen <= AUFS_WH_PFX_LEN
+		    || strncmp(ent.e->name, AUFS_WH_PFX, AUFS_WH_PFX_LEN))
+			err = rdu_ent_append(p, ent.e, fds[1]);
 		else
-			err = rdu_ent_append_wh(p, ent, fds[1]);
-		ent += au_rdu_len(ent->nlen);
+			err = rdu_ent_append_wh(p, ent.e, fds[1]);
+		ent.ul += au_rdu_len(ent.e->nlen);
 	}
 	rdu_store(p, /*ent*/NULL, fds[1]); /* terminate the thread */
 	tdestroy(p->real, rdu_tfree);
@@ -491,18 +408,12 @@ static int rdu_merge(struct rdu *p)
 	t = realloc(p->pos, sizeof(*p->pos) * p->idx);
 	if (t)
 		p->pos = t;
-	t = realloc(p->ino, sizeof(*p->ino) * p->idx);
-	if (t)
-		p->ino = t;
 
  out_close:
 	close(fds[1]);
 	close(fds[0]);
 	if (!err)
 		goto out; /* success */
- out_free2:
-	free(p->ino);
-	p->ino = NULL;
  out_free:
 	free(p->pos);
 	p->pos = NULL;
@@ -532,11 +443,11 @@ static int rdu_init(struct rdu *p)
 				continue;
 
 			assert(param.blk);
-			t = realloc(p->ent, p->sz + param.blk);
+			t = realloc(p->ent.e, p->sz + param.blk);
 			if (t) {
 				param.sz = param.blk;
-				param.ent = (void *)(t + p->sz);
-				p->ent = (void *)t;
+				param.ent.e = (void *)(t + p->sz);
+				p->ent.e = (void *)t;
 				p->sz += param.blk;
 			} else
 				err = -1;
@@ -547,8 +458,8 @@ static int rdu_init(struct rdu *p)
 		err = rdu_merge(p);
 
 	if (err) {
-		free(p->ent);
-		p->ent = NULL;
+		free(p->ent.e);
+		p->ent.e = NULL;
 	}
 
 	return err;
@@ -562,7 +473,7 @@ static int rdu_pos(struct dirent *de, struct rdu *p, long pos)
 	err = -1;
 	if (pos <= p->npos) {
 		ent = p->pos[pos];
-		de->d_ino = p->ino[pos];
+		/* TMP de->d_ino = ; */
 		de->d_off = pos;
 		de->d_reclen = sizeof(*ent) + ent->nlen;
 		de->d_type = ent->type;
@@ -652,7 +563,7 @@ static int rdu_readdir(DIR *dir, struct dirent *de, struct dirent **rde)
 
 		rdu_read_lock(p);
 		if (!de)
-			de = &p->de;
+			de = p->de;
 		err = rdu_pos(de, p, pos);
 		rdu_unlock(p);
 		if (!err) {
@@ -697,6 +608,7 @@ int closedir(DIR *dir)
 	int err, fd;
 	struct statfs stfs;
 
+	err = -1;
 	errno = EBADF;
 	fd = dirfd(dir);
 	if (fd < 0)
