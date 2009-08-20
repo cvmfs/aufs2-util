@@ -18,9 +18,7 @@
 
 #define _ATFILE_SOURCE
 #define _GNU_SOURCE
-#define _REENTRANT
 
-#include <linux/aufs_type.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -30,17 +28,16 @@
 #include <dlfcn.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <pthread.h>
 #include <search.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
+#include <linux/aufs_type.h>
+
 #include "compat.h"
 #include "rdu.h"
-
-/* ---------------------------------------------------------------------- */
 
 static struct rdu **rdu;
 #define RDU_STEP 8
@@ -48,7 +45,7 @@ static int rdu_cur, rdu_lim = RDU_STEP;
 
 /* ---------------------------------------------------------------------- */
 
-#ifdef AuRDU_REENTRANT
+#ifdef _REENTRANT
 pthread_mutex_t rdu_lib_mtx = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
@@ -172,81 +169,13 @@ static void rdu_free(int fd)
 }
 
 /* ---------------------------------------------------------------------- */
-
-static int rdu_do_store(int dirfd, struct au_rdu_ent *ent,
-			struct au_rdu_ent **pos, struct rdu *p)
-{
-	int err;
-	unsigned char c;
-	struct stat st;
-
-	c = ent->name[ent->nlen];
-	ent->name[ent->nlen] = 0;
-	DPri("%s\n", ent->name);
-	err = fstatat(dirfd, ent->name, &st, AT_SYMLINK_NOFOLLOW);
-	ent->name[ent->nlen] = c;
-	if (!err) {
-		pos[p->idx++] = ent;
-	} else {
-		DPri("err %d\n", err);
-		if (errno == ENOENT)
-			err = 0;
-	}
-
-	return err;
-}
-
-struct rdu_thread_arg {
-	int pipefd;
-	struct rdu *p;
-};
-
-static void *rdu_thread(void *_arg)
-{
-	int err, pipefd, dirfd;
-	ssize_t ssz;
-	struct rdu_thread_arg *arg = _arg;
-	struct au_rdu_ent *ent, **pos;
-	struct rdu *p;
-
-	pipefd = arg->pipefd;
-	p = arg->p;
-	dirfd = p->fd;
-	pos = p->pos;
-	while (1) {
-		DPri("read\n");
-		ssz = read(pipefd, &ent, sizeof(ent));
-		DPri("ssz %zd\n", ssz);
-		if (ssz != sizeof(ent) || !ent) {
-			//perror("read");
-			break;
-		}
-
-		//DPri("%p\n", ent);
-		err = rdu_do_store(dirfd, ent, pos, p);
-	}
-
-	DPri("here\n");
-	return NULL;
-}
-
-static int rdu_store(struct rdu *p, struct au_rdu_ent *ent, int pipefd)
-{
-	ssize_t ssz;
-
-	//DPri("%p\n", ent);
-	ssz = write(pipefd, &ent, sizeof(ent));
-	DPri("ssz %zd\n", ssz);
-	//sleep(1);
-	return ssz != sizeof(ent);
-}
-
-/* ---------------------------------------------------------------------- */
 /* the heart of this library */
 
-static void rdu_tfree(void *node)
+static int do_store; /* a dirty interface of tsearch(3) */
+static void rdu_store(struct rdu *p, struct au_rdu_ent *ent)
 {
-	/* empty */
+	DPri("%s\n", ent->name);
+	p->pos[p->idx++] = ent;
 }
 
 static int rdu_ent_compar(const void *_a, const void *_b)
@@ -254,65 +183,52 @@ static int rdu_ent_compar(const void *_a, const void *_b)
 	int ret;
 	const struct au_rdu_ent *a = _a, *b = _b;
 
-	ret = (int)a->nlen - b->nlen;
-	if (!ret)
-		ret = memcmp(a->name, b->name, a->nlen);
+	ret = strcmp(a->name, b->name);
+	do_store = !!ret;
+
+	DPri("%s, %s, %d\n", a->name, b->name, ret);
 	return ret;
 }
 
-static int rdu_ent_compar_wh(const void *_a, const void *_b)
+static int rdu_ent_compar_wh1(const void *_a, const void *_b)
 {
 	int ret;
-	const struct au_rdu_ent *real = _a, *wh = _b;
+	const struct au_rdu_ent *a = _a, *b = _b;
 
-	if (real->nlen >= AUFS_WH_PFX_LEN
-	    && !memcmp(real->name, AUFS_WH_PFX, AUFS_WH_PFX_LEN)) {
-		wh = _a;
-		real = _b;
-	}
+	if (a->nlen <= AUFS_WH_PFX_LEN
+	    || memcmp(a->name, AUFS_WH_PFX, AUFS_WH_PFX_LEN))
+		ret = strcmp(a->name, b->name + AUFS_WH_PFX_LEN);
+	else
+		ret = strcmp(a->name + AUFS_WH_PFX_LEN, b->name);
 
-	ret = (int)wh->nlen - AUFS_WH_PFX_LEN - real->nlen;
-	if (!ret)
-		ret = memcmp(wh->name + AUFS_WH_PFX_LEN, real->name,
-			     real->nlen);
+	DPri("%s, %s, %d\n", a->name, b->name, ret);
 	return ret;
 }
 
-/* tsearch(3) may not be thread-safe */
-static int rdu_ent_append(struct rdu *p, struct au_rdu_ent *ent, int pipefd)
+static int rdu_ent_compar_wh2(const void *_a, const void *_b)
 {
-	int err;
-	struct au_rdu_ent *e;
+	int ret;
+	const struct au_rdu_ent *a = _a, *b = _b;
 
-	err = 0;
-	e = tfind(ent, (void *)&p->wh, rdu_ent_compar_wh);
-	if (e)
-		goto out;
+	ret = strcmp(a->name + AUFS_WH_PFX_LEN,
+		     b->name + AUFS_WH_PFX_LEN);
+	do_store = !!ret;
 
-	e = tsearch(ent, (void *)&p->real, rdu_ent_compar);
-	if (e)
-		err = rdu_store(p, ent, pipefd);
-	else
-		err = -1;
-
- out:
-	return err;
+	DPri("%s, %s, %d\n", a->name, b->name, ret);
+	return ret;
 }
 
-static int rdu_ent_append_wh(struct rdu *p, struct au_rdu_ent *ent, int pipefd)
+static int rdu_ent_append(struct rdu *p, struct au_rdu_ent *ent)
 {
 	int err;
-	struct au_rdu_ent *e;
 
 	err = 0;
-	e = tfind(ent, (void *)&p->wh, rdu_ent_compar);
-	if (e)
+	if (tfind(ent, (void *)&p->wh, rdu_ent_compar_wh1))
 		goto out;
 
-	e = tsearch(ent, (void *)&p->wh, rdu_ent_compar);
-	if (e) {
-		if (p->shwh)
-			err = rdu_store(p, ent, pipefd);
+	if (tsearch(ent, (void *)&p->real, rdu_ent_compar)) {
+		if (do_store)
+			rdu_store(p, ent);
 	} else
 		err = -1;
 
@@ -320,62 +236,71 @@ static int rdu_ent_append_wh(struct rdu *p, struct au_rdu_ent *ent, int pipefd)
 	return err;
 }
 
+static int rdu_ent_append_wh(struct rdu *p, struct au_rdu_ent *ent)
+{
+	int err;
+
+	err = 0;
+	ent->wh = 1;
+	if (tsearch(ent, (void *)&p->wh, rdu_ent_compar_wh2)) {
+		if (p->shwh && do_store)
+			rdu_store(p, ent);
+	} else
+		err = -1;
+
+	return err;
+}
+
+static void rdu_tfree(void *node)
+{
+	/* empty */
+}
+
 static int rdu_merge(struct rdu *p)
 {
 	int err;
 	unsigned long ul;
-	pthread_t th;
-	int fds[2];
-	struct rdu_thread_arg arg;
-	union au_rdu_ent_ul ent;
+	union au_rdu_ent_ul u;
 	void *t;
 
 	err = -1;
-	p->pos = malloc(sizeof(*p->pos) * p->npos);
+	p->pos = realloc(p->pos, sizeof(*p->pos) * p->npos);
 	if (!p->pos)
 		goto out;
 
-	/* pipe(2) may not be scheduled well in linux-2.6.23 and earlier */
-	err = pipe(fds);
-	if (err)
-		goto out_free;
-
-	arg.pipefd = fds[0];
-	arg.p = p;
-	err = pthread_create(&th, NULL, rdu_thread, &arg);
-	if (err)
-		goto out_close;
-
+	err = 0;
+	p->idx = 0;
 	p->real = NULL;
 	p->wh = NULL;
-	ent = p->ent;
+	u = p->ent;
 	for (ul = 0; !err && ul < p->npos; ul++) {
-		if (ent.e->nlen <= AUFS_WH_PFX_LEN
-		    || strncmp(ent.e->name, AUFS_WH_PFX, AUFS_WH_PFX_LEN))
-			err = rdu_ent_append(p, ent.e, fds[1]);
+		DPri("%s\n", u.e->name);
+		u.e->wh = 0;
+		do_store = 1;
+		if (u.e->nlen <= AUFS_WH_PFX_LEN
+		    || memcmp(u.e->name, AUFS_WH_PFX, AUFS_WH_PFX_LEN))
+			err = rdu_ent_append(p, u.e);
 		else
-			err = rdu_ent_append_wh(p, ent.e, fds[1]);
-		ent.ul += au_rdu_len(ent.e->nlen);
+			err = rdu_ent_append_wh(p, u.e);
+		u.ul += au_rdu_len(u.e->nlen);
 	}
-	rdu_store(p, /*ent*/NULL, fds[1]); /* terminate the thread */
 	tdestroy(p->real, rdu_tfree);
 	tdestroy(p->wh, rdu_tfree);
 
-	pthread_join(th, NULL);
-	p->npos = p->idx - 1;
-	/* t == NULL is not an error */
-	t = realloc(p->pos, sizeof(*p->pos) * p->idx);
-	if (t)
-		p->pos = t;
+	if (!err) {
+		p->npos = p->idx - 1;
 
- out_close:
-	close(fds[1]);
-	close(fds[0]);
-	if (!err)
-		goto out; /* success */
- out_free:
-	free(p->pos);
-	p->pos = NULL;
+		if (p->npos) {
+			/* t == NULL is not an error */
+			t = realloc(p->pos, sizeof(*p->pos) * p->idx);
+			if (t)
+				p->pos = t;
+		}
+	} else {
+		free(p->pos);
+		p->pos = NULL;
+	}
+
  out:
 	return err;
 }
