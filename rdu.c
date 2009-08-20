@@ -403,12 +403,11 @@ static int rdu_pos(struct dirent *de, struct rdu *p, long pos)
 	err = -1;
 	if (pos <= p->npos) {
 		ent = p->pos[pos];
-		/* TMP de->d_ino = ; */
+		de->d_ino = ent->ino;
 		de->d_off = pos;
-		de->d_reclen = sizeof(*ent) + ent->nlen;
+		de->d_reclen = au_rdu_len(ent->nlen);
 		de->d_type = ent->type;
-		memcpy(de->d_name, ent->name, ent->nlen);
-		de->d_name[ent->nlen] = 0;
+		strcpy(de->d_name, ent->name);
 		err = 0;
 	}
 	return err;
