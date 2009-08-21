@@ -30,7 +30,7 @@ BinObj = $(addsuffix .o, ${Bin})
 LibSoMajor = 1
 LibSoMinor = 1
 LibSo = libau.so
-LibSoObj = rdu_lib.o rdu.o
+LibSoObj = rdu_lib.o rdu.o rdu64.o
 LibSoHdr = rdu.h
 LibUtil = libautil.a
 LibUtilObj = proc_mnt.o br.o plink.o mtab.o
@@ -44,6 +44,12 @@ ${BinObj}: %.o: %.c ${LibUtilHdr} ${LibUtil}
 
 ${LibUtilObj}: %.o: %.c ${LibUtilHdr}
 ${LibUtil}: ${LibUtil}(${LibUtilObj})
+
+# this is unnecessary on 64bit system?
+rdu64.c: rdu.c
+	ln -sf $< $@
+rdu64.o: CFLAGS += -DRdu64
+.INTERMEDIATE.: rdu64.c
 
 ${LibSoObj}: CFLAGS += -fPIC -DNDEBUG -D_REENTRANT
 ${LibSoObj}: %.o: %.c ${LibSoHdr}
@@ -108,5 +114,6 @@ clean:
 	${RM} ${Man} ${Bin} ${Etc} ${LibUtil} ${LibSo} *~
 	${RM} ${BinObj} ${LibUtilObj} ${LibSoObj}
 	${RM} ${LibSo}.${LibSoMajor} ${LibSo}.${LibSoMajor}.${LibSoMinor}
+	test -L rdu64.c && ${RM} rdu64.c || :
 
 -include priv.mk

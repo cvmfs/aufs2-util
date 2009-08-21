@@ -434,11 +434,6 @@ int closedir(DIR *dir)
 }
 
 #if 0
-extern struct dirent64 *readdir64 (DIR *__dirp) __nonnull ((1));
-extern int readdir64_r (DIR *__restrict __dirp,
-			struct dirent64 *__restrict __entry,
-			struct dirent64 **__restrict __result)
-     __nonnull ((1, 2, 3));
 extern int scandir (__const char *__restrict __dir,
 		    struct dirent ***__restrict __namelist,
 		    int (*__selector) (__const struct dirent *),

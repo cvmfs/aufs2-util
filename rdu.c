@@ -25,7 +25,7 @@
 
 #include "rdu.h"
 
-static int rdu_pos(struct dirent *de, struct rdu *p, long pos)
+static int rdu_pos(struct Rdu_DIRENT *de, struct rdu *p, long pos)
 {
 	int err;
 	struct au_rdu_ent *ent;
@@ -43,7 +43,7 @@ static int rdu_pos(struct dirent *de, struct rdu *p, long pos)
 	return err;
 }
 
-static int rdu_readdir(DIR *dir, struct dirent *de, struct dirent **rde)
+static int rdu_readdir(DIR *dir, struct Rdu_DIRENT *de, struct Rdu_DIRENT **rde)
 {
 	int err, fd;
 	struct rdu *p;
@@ -104,15 +104,15 @@ static int rdu_readdir(DIR *dir, struct dirent *de, struct dirent **rde)
 		rdu_unlock(p);
 		errno = 0;
 	} else if (!de) {
-		if (!rdu_dl_readdir()) {
+		if (!Rdu_DL_READDIR()) {
 			err = 0;
-			*rde = real_readdir(dir);
+			*rde = Rdu_REAL_READDIR(dir);
 			if (!*rde)
 				err = -1;
 		}
 	} else {
-		if (!rdu_dl_readdir_r())
-			err = real_readdir_r(dir, de, rde);
+		if (!Rdu_DL_READDIR_R())
+			err = Rdu_REAL_READDIR_R(dir, de, rde);
 	}
  out:
 	/* follow the behaviour of glibc */
@@ -121,10 +121,10 @@ static int rdu_readdir(DIR *dir, struct dirent *de, struct dirent **rde)
 	return err;
 }
 
-struct dirent *(*real_readdir)(DIR *dir);
-struct dirent *readdir(DIR *dir)
+struct Rdu_DIRENT *(*Rdu_REAL_READDIR)(DIR *dir);
+struct Rdu_DIRENT *Rdu_READDIR(DIR *dir)
 {
-	struct dirent *de;
+	struct Rdu_DIRENT *de;
 	int err;
 
 	err = rdu_readdir(dir, NULL, &de);
@@ -133,8 +133,8 @@ struct dirent *readdir(DIR *dir)
 }
 
 #ifdef _REENTRANT
-int (*real_readdir_r)(DIR *dir, struct dirent *de, struct dirent **rde);
-int readdir_r(DIR *dir, struct dirent *de, struct dirent **rde)
+int (*Rdu_REAL_READDIR_R)(DIR *dir, struct Rdu_DIRENT *de, struct Rdu_DIRENT **rde);
+int Rdu_READDIR_R(DIR *dir, struct Rdu_DIRENT *de, struct Rdu_DIRENT **rde)
 {
 	return rdu_readdir(dir, de, rde);
 }
