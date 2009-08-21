@@ -16,7 +16,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#define _ATFILE_SOURCE
 #define _GNU_SOURCE
 
 #include <sys/ioctl.h>
@@ -36,7 +35,6 @@
 
 #include <linux/aufs_type.h>
 
-#include "compat.h"
 #include "rdu.h"
 
 static struct rdu **rdu;
