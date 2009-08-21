@@ -75,19 +75,11 @@ static int rdu_readdir(DIR *dir, struct dirent *de, struct dirent **rde)
 
 		pos = telldir(dir);
 		if (!pos || !p->npos) {
-			err = rdu_init(p);
-			if (!err && !de && !p->de) {
-				p->de = malloc(sizeof(*p->de));
-				if (!p->de) {
-					int e = errno;
-					rdu_free(p);
-					errno = e;
-					err = -1;
-					goto out;
-				}
-			}
+			err = rdu_init(p, /*want_de*/!de);
 			if (err) {
-				rdu_unlock(p);
+				int e = errno;
+				rdu_free(p);
+				errno = e;
 				goto out;
 			}
 		}

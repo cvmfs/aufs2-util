@@ -320,7 +320,7 @@ static int rdu_merge(struct rdu *p)
 	return err;
 }
 
-int rdu_init(struct rdu *p)
+int rdu_init(struct rdu *p, int want_de)
 {
 	int err;
 	unsigned long used;
@@ -370,10 +370,18 @@ int rdu_init(struct rdu *p)
 	p->shwh = param.shwh;
 	if (!err)
 		err = rdu_merge(p);
+
 	if (!err) {
 		param.ent = p->ent;
 		param.nent = p->npos;
 		err = ioctl(p->fd, AUFS_CTL_RDU_INO, &param);
+	}
+
+	if (!err && want_de && !p->de) {
+		err = -1;
+		p->de = malloc(sizeof(*p->de));
+		if (p->de)
+			err = 0;
 	}
 
 	if (err) {

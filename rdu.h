@@ -47,7 +47,7 @@ struct rdu {
 /* rdu_lib.c */
 int rdu_lib_init(void);
 struct rdu *rdu_buf_lock(int fd);
-int rdu_init(struct rdu *p);
+int rdu_init(struct rdu *p, int want_de);
 void rdu_free(struct rdu *p);
 
 int rdu_dl(void **real, char *sym);
