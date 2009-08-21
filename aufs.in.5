@@ -1120,6 +1120,55 @@ general. Of course, you will need system memory. This is a generic
 "time\-vs\-space" problem.
 
 .\" ----------------------------------------------------------------------
+.SH VDIR/readdir(3) in user\-space (RDU)
+If you have a directory which has millions of files, aufs VDIR consumes
+much memory. You may meet "out of memory" message due to
+the memory fragmentation or real starvation. In this case, RDU
+(readdir(3) in user\-space) may help you.
+
+If you enable CONFIG_AUFS_RDU at compiling aufs, and install libau.so in
+aufs2-util GIT tree (by "make install_ulib"), then you can use RDU.
+Just simply set the environment variable "LD_PRELOAD=libau.so"
+and run your application. The dynamic link library libau.so implements
+another readdir routine, and all readdir(3) calls in your application
+will be handled by libau.so.
+
+When you call readdir(3), the dynamic linker calls readdir in libau.so.
+If it finds the passed dir is NOT aufs, it calls the usual readdir(3).
+It the dir is aufs, then libau.so gets all filenames under the dir by
+aufs specific ioctl(2)s, instead of regular readdir(3), and merges them
+by itself.
+In other words,
+libau.so moves the memory consumption in kernel\-space to user\-space.
+
+While it is good to stop consuming much memory in kernel\-space,
+sometimes the speed performance may be damaged a little as a side
+effect.
+It is just a little, I hope.
+
+It is recommended to specify rdblk=0 when you use this library.
+
+If your directory is not so huge and you don't meet the out of memory
+situation, probably you don't need this library. The original VDIR in
+kernel\-space is still alive, and you can live without libau.so.
+
+.SS Note
+Since this is a dynamically linked library, it is unavailable if your
+application is statically linked. And ld.so(8) ignores LD_PRELOAD when
+the application is setuid/setgid\-ed unless the library is not
+setuid/setgid\-ed. It is a generic rule of
+dynamically linked library.
+Additionally libau.so is unavailable in these cases too.
+.RS
+.Bu
+the application or library issues getdents(2) instead of readdir(3).
+.Bu
+the library which implements readdir(3) calls it
+internally. e.g. scandir(3).
+.RE
+
+
+.\" ----------------------------------------------------------------------
 .SH Copy On Write, or aufs internal copyup and copydown
 Every stackable filesystem which implements copy\-on\-write supports the
 copyup feature. The feature is to copy a file/dir from the lower branch

@@ -40,6 +40,10 @@ o /usr/bin/aubrsync
 o /etc/default/aufs
   A library for shell scripts.
 
+o /usr/lib/libau.so
+  A dynamic link library for "readdir(3) in user-space".
+  If you need this , then run "make libau.so install_ulib". And refer to
+  the aufs manual in detail.
 
 # Local variables: ;
 # mode: text;
