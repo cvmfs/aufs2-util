@@ -23,6 +23,7 @@
 #include <pthread.h>
 #endif
 
+#include <assert.h>
 #include <dirent.h>
 #include <linux/aufs_type.h>
 
@@ -42,6 +43,33 @@ struct rdu {
 
 	struct au_rdu_ent *real, *wh;
 };
+
+/* rdu_lib.c */
+int rdu_lib_init(void);
+struct rdu *rdu_buf_lock(int fd);
+int rdu_init(struct rdu *p);
+void rdu_free(struct rdu *p);
+
+int rdu_dl(void **real, char *sym);
+
+/* ---------------------------------------------------------------------- */
+
+#define RduDlFunc(sym) \
+static inline int rdu_dl_##sym(void) \
+{ \
+	return rdu_dl((void *)&real_##sym, #sym); \
+}
+
+extern struct dirent *(*real_readdir)(DIR *dir);
+extern int (*real_readdir_r)(DIR *dir, struct dirent *de, struct dirent **rde);
+
+RduDlFunc(readdir);
+
+#ifdef _REENTRANT
+RduDlFunc(readdir_r);
+#else
+#define rdu_dl_readdir_r()	1
+#endif
 
 /* ---------------------------------------------------------------------- */
 
