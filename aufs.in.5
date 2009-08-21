@@ -1144,7 +1144,8 @@ libau.so moves the memory consumption in kernel\-space to user\-space.
 While it is good to stop consuming much memory in kernel\-space,
 sometimes the speed performance may be damaged a little as a side
 effect.
-It is just a little, I hope.
+It is just a little, I hope. At the same time, I won't be surprised if
+readdir(3) runs faster.
 
 It is recommended to specify rdblk=0 when you use this library.
 
