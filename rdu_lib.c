@@ -38,8 +38,6 @@ static int rdu_cur, rdu_lim = RDU_STEP;
 
 static int rdu_getent(struct rdu *p, struct aufs_rdu *param)
 {
-	int err;
-
 	DPri("param{%llu, %p, (%u, %u) | %u | %llu, %u, %d |"
 	     " %llu, %d, 0x%x, %u}\n",
 	     param->sz, param->ent.e,
@@ -49,12 +47,7 @@ static int rdu_getent(struct rdu *p, struct aufs_rdu *param)
 	     param->cookie.h_pos, param->cookie.bindex, param->cookie.flags,
 	     param->cookie.generation);
 
-	err = ioctl(p->fd, AUFS_CTL_RDU, param);
-	/* follow the behaviour of glibc */
-	if (err && errno == ENOENT)
-		errno = 0;
-
-	return err;
+	return ioctl(p->fd, AUFS_CTL_RDU, param);
 }
 
 /* ---------------------------------------------------------------------- */

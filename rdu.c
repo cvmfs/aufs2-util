@@ -115,6 +115,9 @@ static int rdu_readdir(DIR *dir, struct dirent *de, struct dirent **rde)
 			err = real_readdir_r(dir, de, rde);
 	}
  out:
+	/* follow the behaviour of glibc */
+	if (err && errno == ENOENT)
+		errno = 0;
 	return err;
 }
 
