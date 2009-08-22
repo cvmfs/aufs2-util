@@ -128,7 +128,7 @@ struct Rdu_DIRENT *Rdu_READDIR(DIR *dir)
 	int err;
 
 	err = rdu_readdir(dir, NULL, &de);
-	DPri("err %d\n", err);
+	/* DPri("err %d\n", err); */
 	return de;
 }
 

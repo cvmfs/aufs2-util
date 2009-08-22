@@ -38,16 +38,29 @@ static int rdu_cur, rdu_lim = RDU_STEP;
 
 static int rdu_getent(struct rdu *p, struct aufs_rdu *param)
 {
-	DPri("param{%llu, %p, (%u, %u) | %u | %llu, %u, %d |"
+	int err;
+
+	DPri("param{%llu, %p, (%u, %u) | %u | %p, %llu, %u, %d |"
 	     " %llu, %d, 0x%x, %u}\n",
 	     param->sz, param->ent.e,
 	     param->verify[0], param->verify[1],
 	     param->blk,
-	     param->rent, param->shwh, param->full,
+	     param->tail.e, param->rent, param->shwh, param->full,
 	     param->cookie.h_pos, param->cookie.bindex, param->cookie.flags,
 	     param->cookie.generation);
 
-	return ioctl(p->fd, AUFS_CTL_RDU, param);
+	err = ioctl(p->fd, AUFS_CTL_RDU, param);
+
+	DPri("param{%llu, %p, (%u, %u) | %u | %p, %llu, %u, %d |"
+	     " %llu, %d, 0x%x, %u}\n",
+	     param->sz, param->ent.e,
+	     param->verify[0], param->verify[1],
+	     param->blk,
+	     param->tail.e, param->rent, param->shwh, param->full,
+	     param->cookie.h_pos, param->cookie.bindex, param->cookie.flags,
+	     param->cookie.generation);
+
+	return err;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -182,7 +195,7 @@ void rdu_free(struct rdu *p)
 static int do_store; /* a dirty interface of tsearch(3) */
 static void rdu_store(struct rdu *p, struct au_rdu_ent *ent)
 {
-	DPri("%s\n", ent->name);
+	/* DPri("%s\n", ent->name); */
 	p->pos[p->idx++] = ent;
 }
 
@@ -194,7 +207,7 @@ static int rdu_ent_compar(const void *_a, const void *_b)
 	ret = strcmp(a->name, b->name);
 	do_store = !!ret;
 
-	DPri("%s, %s, %d\n", a->name, b->name, ret);
+	/* DPri("%s, %s, %d\n", a->name, b->name, ret); */
 	return ret;
 }
 
@@ -209,7 +222,7 @@ static int rdu_ent_compar_wh1(const void *_a, const void *_b)
 	else
 		ret = strcmp(a->name + AUFS_WH_PFX_LEN, b->name);
 
-	DPri("%s, %s, %d\n", a->name, b->name, ret);
+	/* DPri("%s, %s, %d\n", a->name, b->name, ret); */
 	return ret;
 }
 
@@ -222,7 +235,7 @@ static int rdu_ent_compar_wh2(const void *_a, const void *_b)
 		     b->name + AUFS_WH_PFX_LEN);
 	do_store = !!ret;
 
-	DPri("%s, %s, %d\n", a->name, b->name, ret);
+	/* DPri("%s, %s, %d\n", a->name, b->name, ret); */
 	return ret;
 }
 
@@ -282,7 +295,7 @@ static int rdu_merge(struct rdu *p)
 	p->wh = NULL;
 	u = p->ent;
 	for (ul = 0; !err && ul < p->npos; ul++) {
-		DPri("%s\n", u.e->name);
+		/* DPri("%s\n", u.e->name); */
 		u.e->wh = 0;
 		do_store = 1;
 		if (u.e->nlen <= AUFS_WH_PFX_LEN
@@ -326,6 +339,7 @@ int rdu_init(struct rdu *p, int want_de)
 	param.verify[AufsCtlRduV_SZ_PTR] = sizeof(t);
 	param.sz = p->sz;
 	param.ent = p->ent;
+	param.tail = param.ent;
 	if (!param.ent.e) {
 		err = -1;
 		param.ent.e = malloc(param.sz);
@@ -339,6 +353,7 @@ int rdu_init(struct rdu *p, int want_de)
 
 	p->npos = 0;
 	while (1) {
+		param.full = 0;
 		err = rdu_getent(p, &param);
 		if (err || !param.rent)
 			break;
@@ -351,11 +366,17 @@ int rdu_init(struct rdu *p, int want_de)
 		e = realloc(p->ent.e, p->sz + param.blk);
 		if (e) {
 			used = param.tail.ul - param.ent.ul;
+			DPri("used %lu\n", used);
 			param.sz += param.blk - used;
+			DPri("sz %llu\n", param.sz);
 			used += param.ent.ul - p->ent.ul;
+			DPri("used %lu\n", used);
 			p->ent.e = e;
 			param.ent.ul = p->ent.ul + used;
+			DPri("ent %p\n", param.ent.e);
+			param.tail = param.ent;
 			p->sz += param.blk;
+			DPri("sz %llu\n", p->sz);
 		} else
 			err = -1;
 	}
