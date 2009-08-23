@@ -1123,8 +1123,10 @@ general. Of course, you will need system memory. This is a generic
 .SH VDIR/readdir(3) in user\-space (RDU)
 If you have a directory which has millions of files, aufs VDIR consumes
 much memory. You may meet "out of memory" message due to
-the memory fragmentation or real starvation. In this case, RDU
-(readdir(3) in user\-space) may help you.
+the memory fragmentation or real starvation.
+In this case, RDU (readdir(3) in user\-space) may help you.
+Because the kernel memory space cannot be swappable and consuming much
+can be pure memory pressure, while it is not true in user\-space.
 
 If you enable CONFIG_AUFS_RDU at compiling aufs, and install libau.so in
 aufs2-util GIT tree (by "make install_ulib"), then you can use RDU.
