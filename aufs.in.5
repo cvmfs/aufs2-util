@@ -247,7 +247,10 @@ The size has to be lager than NAME_MAX (usually 255) and kmalloc\-able
 for every system).
 If you set it to zero, then the internal estimation for the directory
 size becomes ON, and aufs sets the value for the directory individually.
-Sometimes the estimated value may be larger than the approprate value.
+Sometimes the estimated value may be inappropriate since the estimation
+is not so clever. Setting zero is useful when you use RDU
+(cf. VDIR/readdir(3) in user\-space (RDU).
+Otherwise it may be a pressure for kernel memory space.
 Anytime you can reset the value to default by specifying rdblk=def.
 (cf. Virtual or Vertical Directory Block).
 .
@@ -266,7 +269,10 @@ kmalloc\-able
 for every system).
 If you set it to zero, then the internal estimation for the directory
 becomes ON, and aufs sets the value for the directory individually.
-Sometimes the estimated value may be larger than the approprate value.
+Sometimes the estimated value may be inappropriate since the estimation
+is not so clever. Setting zero is useful when you use RDU
+(cf. VDIR/readdir(3) in user\-space (RDU).
+Otherwise it may be a pressure for kernel memory space.
 Anytime you can reset the value to default by specifying rdhash=def.
 (cf. Virtual or Vertical Directory Block).
 .
