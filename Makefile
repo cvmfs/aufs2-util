@@ -44,6 +44,7 @@ ${BinObj}: %.o: %.c ${LibUtilHdr} ${LibUtil}
 
 ${LibUtilObj}: %.o: %.c ${LibUtilHdr}
 ${LibUtil}: ${LibUtil}(${LibUtilObj})
+.NOTPARALLEL: ${LibUtil}
 
 # this is unnecessary on 64bit system?
 rdu64.c: rdu.c
