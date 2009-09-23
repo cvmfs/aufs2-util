@@ -172,10 +172,10 @@ static inline void rdu_dgrade_lock(struct rdu *p)
 
 /* #define RduDebug */
 #ifdef RduDebug
-#define DPri(fmt, args...)	fprintf(stderr, "%s:%d: " fmt, \
-					__func__, __LINE__, ##args)
+#define DPri(fmt, ...)	fprintf(stderr, "%s:%d: " fmt, \
+				__func__, __LINE__, ##__VA__ARGS__)
 #else
-#define DPri(fmt, args...)	do {} while (0)
+#define DPri(fmt, ...)	do {} while (0)
 #endif
 
 #endif /* __rdu_h__ */
