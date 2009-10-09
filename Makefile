@@ -19,7 +19,14 @@ ifndef KDIR
 KDIR = /lib/modules/$(shell uname -r)/build
 endif
 
+ifndef ARCH
+ARCH := $(shell uname -m)
+endif
+ARCH := $(shell echo ${ARCH} | sed -e 's/_64$$//')
+
 CFLAGS += -I${KDIR}/include
+d=${KDIR}/arch/${ARCH}/include
+CFLAGS += $(shell test -d ${d} && echo -I${d})
 CFLAGS += -O -Wall
 
 Cmd = umount.aufs auchk aubrsync

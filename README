@@ -11,6 +11,12 @@ detail.
 Makefile in this tree has some customizable make-variables.
 - KDIR
   specify your kernel source path if necessary
+- CPPFLAGS or ARCH
+  specify the include path to your aufs2-standalone tree, if necessary.
+  the makefile finds the correct ${KDIR}/arch/${ARCH}/include dir and
+  sets the include path to CPPFLAGS="-I...". if the login in Makefile is
+  poor and doesn't support your build environment, then set the
+  variables directly.
 - DESTDIR
   specify your install path if necessary.
   some commands have to be installed under /sbin.
