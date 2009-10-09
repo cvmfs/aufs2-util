@@ -23,10 +23,10 @@ ifndef ARCH
 ARCH := $(shell uname -m)
 endif
 ARCH := $(shell echo ${ARCH} | sed -e 's/_64$$//')
+ArchDir = ${KDIR}/arch/${ARCH}/include
 
 CFLAGS += -I${KDIR}/include
-d=${KDIR}/arch/${ARCH}/include
-CFLAGS += $(shell test -d ${d} && echo -I${d})
+CFLAGS += $(shell test -d ${ArchDir} && echo -I${ArchDir})
 CFLAGS += -O -Wall
 
 Cmd = umount.aufs auchk aubrsync
