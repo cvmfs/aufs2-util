@@ -1432,7 +1432,8 @@ after checking by `df \-i.'
 
 When you rmdir or rename-to the dir who has a number of whiteouts,
 aufs rename the dir to the temporary whiteouted-name like
-`\*[AUFS_WH_PFX]<dir>.<random hex>.' Then remove it after actual operation.
+`\*[AUFS_WH_PFX]\*[AUFS_WH_PFX]<dir>.<\*[AUFS_WH_TMP_LEN]-digits hex>.'
+Then remove it after actual operation.
 cf. mount option `dirwh.'
 
 .\" ----------------------------------------------------------------------
@@ -1455,16 +1456,28 @@ topmost inode.
 
 statfs(2) returns the information of the first branch info except
 namelen when `nosum' is specified (the default). The namelen is
-decreased by the whiteout prefix length. And the block size may differ
+decreased by the whiteout prefix length.
+Although the whiteout prefix is essentially `\*[AUFS_WH_PFX]', to
+support rmdir(2) and
+rename(2) (when the target directory already existed), the namelen is
+decreased more since the name will be renamed to
+`\*[AUFS_WH_PFX]\*[AUFS_WH_PFX]<dir>.<\*[AUFS_WH_TMP_LEN]-digits hex>'
+as previously described.
+And the block size may differ
 from st_blksize which is obtained by stat(2).
-
-Remember, seekdir(3) and telldir(3) are not defined in POSIX. They may
-not work as you expect. Try rewinddir(3) or re-open the dir.
 
 The whiteout prefix (\*[AUFS_WH_PFX]) is reserved on all branches. Users should
 not handle the filename begins with this prefix.
 In order to future whiteout, the maximum filename length is limited by
-the longest value \- \*[AUFS_WH_PFX_LEN]. It may be a violation of POSIX.
+the longest value \- \*[AUFS_WH_PFX_LEN] * 2 \- 1 \-
+\*[AUFS_WH_TMP_LEN] = \*[AUFS_MAX_NAMELEN].
+It means you cannot create such long name in
+aufs, but may remove it (by whiteout) which already existed on readonly
+branch.
+It may be a violation of POSIX.
+
+Remember, seekdir(3) and telldir(3) are not defined in POSIX. They may
+not work as you expect. Try rewinddir(3) or re-open the dir.
 
 If you dislike the difference between the aufs entries in /etc/mtab
 and /proc/mounts, and if you are using mount(8) in util\-linux package,
