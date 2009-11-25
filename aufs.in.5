@@ -318,10 +318,10 @@ When you specify diropq=a or diropq==always, aufs will always create
 it regardless
 the directory was whiteouted/opaqued or not.
 The default value is diropq=w, it means not to create when it is unnecessary.
-If you define CONFIG_AUFS_COMPAT at aufs compiling time, the default will be
-diropq=a.
-You need to consider this option if you are planning to add a branch later
-since `diropq' affects the same named directory on the added branch.
+.\" If you define CONFIG_AUFS_COMPAT at aufs compiling time, the default will be
+.\" diropq=a.
+.\" You need to consider this option if you are planning to add a branch later
+.\" since `diropq' affects the same named directory on the added branch.
 .
 .TP
 .B warn_perm
@@ -1001,7 +1001,7 @@ be updated.
 When an error condition occurs between UDBA and aufs operation, aufs
 will return an error, including EIO.
 To use this option, you need to enable CONFIG_INOTIFY and
-CONFIG_AUFS_UDBA_INOTIFY.
+CONFIG_AUFS_HINOTIFY.
 
 To rename/rmdir a directory on a branch directory may reveal the same named
 directory on the lower branch. Aufs tries re-lookuping the renamed
@@ -1370,12 +1370,12 @@ specified filesystem.
 
 .\" ----------------------------------------------------------------------
 .SH Compatible/Incompatible with Unionfs Version 1.x Series
-If you compile aufs with \-DCONFIG_AUFS_COMPAT, dirs= option and =nfsro
-branch permission flag are available. They are interpreted as
-br: option and =ro flags respectively.
- `debug', `delete', `imap' options are ignored silently. When you
-compile aufs without \-DCONFIG_AUFS_COMPAT, these three options are
-also ignored, but a warning message is issued.
+.\" If you compile aufs with \-DCONFIG_AUFS_COMPAT, dirs= option and =nfsro
+.\" branch permission flag are available. They are interpreted as
+.\" br: option and =ro flags respectively.
+.\"  `debug', `delete', `imap' options are ignored silently. When you
+.\" compile aufs without \-DCONFIG_AUFS_COMPAT, these three options are
+.\" also ignored, but a warning message is issued.
 
 Ignoring `delete' option, and to keep filesystem consistency, aufs tries
 writing something to only one branch in a single systemcall. It means
@@ -1415,10 +1415,11 @@ whiteout is an empty file, it means whiteout is just an mark.
 In the case of hiding lower files, the name of whiteout is
 `\*[AUFS_WH_PFX]<filename>.'
 And in the case of stopping readdir, the name is
-`\*[AUFS_WH_PFX]\*[AUFS_WH_PFX].opq' or
-`\*[AUFS_WH_PFX]__dir_opaque.' The name depends upon your compile
-configuration
-CONFIG_AUFS_COMPAT.
+`\*[AUFS_WH_PFX]\*[AUFS_WH_PFX].opq'.
+.\"  or
+.\" `\*[AUFS_WH_PFX]__dir_opaque.' The name depends upon your compile
+.\" configuration
+.\" CONFIG_AUFS_COMPAT.
 .\" All of newly created or renamed directory will be opaque.
 All whiteouts are hardlinked,
 including `<writable branch top dir>/\*[AUFS_WH_BASE].'
