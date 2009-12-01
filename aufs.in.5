@@ -1471,9 +1471,10 @@ not handle the filename begins with this prefix.
 In order to future whiteout, the maximum filename length is limited by
 the longest value \- \*[AUFS_WH_PFX_LEN] * 2 \- 1 \-
 \*[AUFS_WH_TMP_LEN] = \*[AUFS_MAX_NAMELEN].
-It means you cannot create such long name in
-aufs, but may remove it (by whiteout) which already existed on readonly
-branch.
+It means you cannot handle such long name in
+aufs, even if it surely exists on the underlying branch fs. The
+readdir(3)/getdents(2) call show you such name, but the d_type is set to
+DT_UNKNOWN.
 It may be a violation of POSIX.
 
 Remember, seekdir(3) and telldir(3) are not defined in POSIX. They may
