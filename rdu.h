@@ -26,6 +26,7 @@
 #include <assert.h>
 #include <dirent.h>
 #include <linux/aufs_type.h>
+#include "libau.h"
 
 #ifdef Rdu64
 #define Rdu_DIRENT		dirent64
@@ -33,16 +34,16 @@
 #define Rdu_READDIR_R		readdir64_r
 #define Rdu_REAL_READDIR	real_readdir64
 #define Rdu_REAL_READDIR_R	real_readdir64_r
-#define Rdu_DL_READDIR		rdu_dl_readdir64
-#define Rdu_DL_READDIR_R	rdu_dl_readdir64_r
+#define Rdu_DL_READDIR		libau_dl_readdir64
+#define Rdu_DL_READDIR_R	libau_dl_readdir64_r
 #else
 #define Rdu_DIRENT		dirent
 #define Rdu_READDIR		readdir
 #define Rdu_READDIR_R		readdir_r
 #define Rdu_REAL_READDIR	real_readdir
 #define Rdu_REAL_READDIR_R	real_readdir_r
-#define Rdu_DL_READDIR		rdu_dl_readdir
-#define Rdu_DL_READDIR_R	rdu_dl_readdir_r
+#define Rdu_DL_READDIR		libau_dl_readdir
+#define Rdu_DL_READDIR_R	libau_dl_readdir_r
 #endif
 
 /* ---------------------------------------------------------------------- */
@@ -70,33 +71,25 @@ struct rdu *rdu_buf_lock(int fd);
 int rdu_init(struct rdu *p, int want_de);
 void rdu_free(struct rdu *p);
 
-int rdu_dl(void **real, char *sym);
-
 /* ---------------------------------------------------------------------- */
 
 extern struct Rdu_DIRENT *(*Rdu_REAL_READDIR)(DIR *dir);
 extern int (*Rdu_REAL_READDIR_R)(DIR *dir, struct Rdu_DIRENT *de, struct
 				 Rdu_DIRENT **rde);
 
-#define RduDlFunc(sym) \
-static inline int rdu_dl_##sym(void) \
-{ \
-	return rdu_dl((void *)&real_##sym, #sym); \
-}
-
 #ifdef Rdu64
-RduDlFunc(readdir64)
+LibAuDlFunc(readdir64)
 #ifdef _REENTRANT
-RduDlFunc(readdir64_r);
+LibAuDlFunc(readdir64_r);
 #else
-#define rdu_dl_readdir64_r()	1
+#define libau_dl_readdir64_r()	1
 #endif
 #else /* Rdu64 */
-RduDlFunc(readdir)
+LibAuDlFunc(readdir)
 #ifdef _REENTRANT
-RduDlFunc(readdir_r);
+LibAuDlFunc(readdir_r);
 #else
-#define rdu_dl_readdir_r()	1
+#define libau_dl_readdir_r()	1
 #endif
 #endif /* Rdu64 */
 
@@ -167,15 +160,5 @@ static inline void rdu_dgrade_lock(struct rdu *p)
 	/* empty */
 }
 #endif /* _REENTRANT */
-
-/* ---------------------------------------------------------------------- */
-
-/* #define RduDebug */
-#ifdef RduDebug
-#define DPri(fmt, ...)	fprintf(stderr, "%s:%d: " fmt, \
-				__func__, __LINE__, ##__VA__ARGS__)
-#else
-#define DPri(fmt, ...)	do {} while (0)
-#endif
 
 #endif /* __rdu_h__ */

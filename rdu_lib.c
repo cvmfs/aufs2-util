@@ -21,7 +21,6 @@
 #include <sys/ioctl.h>
 #include <sys/vfs.h>    /* or <sys/statfs.h> */
 #include <assert.h>
-#include <dlfcn.h>
 #include <errno.h>
 #include <search.h>
 #include <stdio.h>
@@ -409,23 +408,8 @@ int rdu_init(struct rdu *p, int want_de)
 
 /* ---------------------------------------------------------------------- */
 
-int rdu_dl(void **real, char *sym)
-{
-	char *p;
-
-	if (*real)
-		return 0;
-
-	dlerror(); /* clear */
-	*real = dlsym(RTLD_NEXT, sym);
-	p = dlerror();
-	if (p)
-		fprintf(stderr, "%s\n", p);
-	return !!p;
-}
-
 static int (*real_closedir)(DIR *dir);
-RduDlFunc(closedir);
+LibAuDlFunc(closedir);
 
 int closedir(DIR *dir)
 {
@@ -447,7 +431,7 @@ int closedir(DIR *dir)
 		if (p)
 			rdu_free(p);
 	}
-	if (!rdu_dl_closedir())
+	if (!libau_dl_closedir())
 		err = real_closedir(dir);
 
  out:

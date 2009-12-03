@@ -35,15 +35,16 @@ Etc = etc_default_aufs
 Bin = auplink mount.aufs #auctl
 BinObj = $(addsuffix .o, ${Bin})
 LibSoMajor = 1
-LibSoMinor = 1
+LibSoMinor = 2
 LibSo = libau.so
-LibSoObj = rdu_lib.o rdu.o rdu64.o
-LibSoHdr = rdu.h
+LibSoObj = libau.o \
+	rdu_lib.o rdu.o rdu64.o
+LibSoHdr = libau.h rdu.h
 LibUtil = libautil.a
 LibUtilObj = proc_mnt.o br.o plink.o mtab.o
 LibUtilHdr = au_util.h
 
-all: ${Man} ${Bin} ${Etc} #${LibSo}
+all: ${Man} ${Bin} ${Etc} ${LibSo}
 
 ${Bin}: LDFLAGS += -static -s
 ${Bin}: LDLIBS = -L. -lautil
