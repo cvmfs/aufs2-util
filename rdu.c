@@ -127,8 +127,13 @@ struct Rdu_DIRENT *Rdu_READDIR(DIR *dir)
 	struct Rdu_DIRENT *de;
 	int err;
 
-	err = rdu_readdir(dir, NULL, &de);
-	/* DPri("err %d\n", err); */
+	if (LibAuTestFunc(Rdu_READDIR)) {
+		err = rdu_readdir(dir, NULL, &de);
+		/* DPri("err %d\n", err); */
+	} else if (!Rdu_DL_READDIR())
+		de = Rdu_REAL_READDIR(dir);
+	else
+		de = NULL;
 	return de;
 }
 
@@ -136,6 +141,11 @@ struct Rdu_DIRENT *Rdu_READDIR(DIR *dir)
 int (*Rdu_REAL_READDIR_R)(DIR *dir, struct Rdu_DIRENT *de, struct Rdu_DIRENT **rde);
 int Rdu_READDIR_R(DIR *dir, struct Rdu_DIRENT *de, struct Rdu_DIRENT **rde)
 {
-	return rdu_readdir(dir, de, rde);
+	if (LibAuTestFunc(Rdu_READDIR_R))
+		return rdu_readdir(dir, de, rde);
+	else if (!Rdu_DL_READDIR_R())
+		return Rdu_READDIR_R(dir, de, rde);
+	else
+		return errno;
 }
 #endif

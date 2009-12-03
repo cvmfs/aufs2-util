@@ -418,18 +418,22 @@ int closedir(DIR *dir)
 	struct rdu *p;
 
 	err = -1;
-	errno = EBADF;
-	fd = dirfd(dir);
-	if (fd < 0)
-		goto out;
-	err = fstatfs(fd, &stfs);
-	if (err)
-		goto out;
+	if (LibAuTestFunc(Rdu_READDIR)
+	    || LibAuTestFunc(Rdu_READDIR_R)
+	    || LibAuTestFunc(closedir)) {
+		errno = EBADF;
+		fd = dirfd(dir);
+		if (fd < 0)
+			goto out;
+		err = fstatfs(fd, &stfs);
+		if (err)
+			goto out;
 
-	if (stfs.f_type == AUFS_SUPER_MAGIC) {
-		p = rdu_buf_lock(fd);
-		if (p)
-			rdu_free(p);
+		if (stfs.f_type == AUFS_SUPER_MAGIC) {
+			p = rdu_buf_lock(fd);
+			if (p)
+				rdu_free(p);
+		}
 	}
 	if (!libau_dl_closedir())
 		err = real_closedir(dir);

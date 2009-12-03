@@ -35,7 +35,7 @@ Etc = etc_default_aufs
 Bin = auplink mount.aufs #auctl
 BinObj = $(addsuffix .o, ${Bin})
 LibSoMajor = 1
-LibSoMinor = 2
+LibSoMinor = 3
 LibSo = libau.so
 LibSoObj = libau.o \
 	rdu_lib.o rdu.o rdu64.o

@@ -19,6 +19,7 @@
 
 #include <stdio.h>
 #include <linux/aufs_type.h>
+#include "libau.h"
 
 int
 main(int argc, char *argv[])
@@ -42,5 +43,7 @@ main(int argc, char *argv[])
 	pint(AUFS_MFS_SECOND_DEF);
 	pint(AUFS_RDBLK_DEF);
 	pint(AUFS_RDHASH_DEF);
+
+	pstr(LibAuEnv);
 	return 0;
 }

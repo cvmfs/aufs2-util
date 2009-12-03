@@ -22,6 +22,9 @@
 #include <stdio.h>
 
 int libau_dl(void **real, char *sym);
+int libau_test_func(char *sym);
+
+#define LibAuEnv	"LIBAU"
 
 #define LibAuDlFunc(sym) \
 static inline int libau_dl_##sym(void) \
@@ -29,12 +32,16 @@ static inline int libau_dl_##sym(void) \
 	return libau_dl((void *)&real_##sym, #sym); \
 }
 
+#define LibAuStr(sym)		#sym
+#define LibAuStr2(sym)		LibAuStr(sym)
+#define LibAuTestFunc(sym)	libau_test_func(LibAuStr2(sym))
+
 /* ---------------------------------------------------------------------- */
 
 /* #define LibAuDebug */
 #ifdef LibAuDebug
 #define DPri(fmt, ...)	fprintf(stderr, "%s:%d: " fmt, \
-				__func__, __LINE__, ##__VA__ARGS__)
+				__func__, __LINE__, ##__VA_ARGS__)
 #else
 #define DPri(fmt, ...)	do {} while (0)
 #endif

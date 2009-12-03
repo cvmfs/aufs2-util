@@ -39,3 +39,31 @@ int libau_dl(void **real, char *sym)
 		fprintf(stderr, "%s\n", p);
 	return !!p;
 }
+
+/* always retrieve the var from environment, since it can be changed anytime */
+int libau_test_func(char *sym)
+{
+	int ret, l;
+	char *e;
+
+	ret = 0;
+	e = getenv(LibAuEnv);
+	if (!e)
+		goto out;
+	DPri("e 0x%02x, %s\n", *e, e);
+
+	ret = !*e || !strcasecmp(e, "all");
+	if (ret)
+		goto out;
+
+	l = strlen(sym);
+	while (!ret && (e = strstr(e, sym))) {
+		DPri("%s, l %d, %c\n", e, l, e[l]);
+		ret = (!e[l] || e[l] == ':');
+		e++;
+	}
+
+ out:
+	DPri("%s %d\n", sym, ret);
+	return ret;
+}
