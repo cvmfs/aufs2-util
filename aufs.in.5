@@ -1126,7 +1126,31 @@ general. Of course, you will need system memory. This is a generic
 "time\-vs\-space" problem.
 
 .\" ----------------------------------------------------------------------
-.SH VDIR/readdir(3) in user\-space (RDU)
+.SH Using libau.so
+There is a dynamic shared object library called libau.so in aufs2-util
+GIT tree. This library provides several useful functions which wrap the
+standard library functions such as,
+.RS
+.Bu
+readdir, readdir_r, closedir
+.\" .Bu
+.\" pathconf, fpathconf
+.RE
+
+To use libau.so,
+.RS
+.Bu
+install by "make install_ulib" under aufs2-util GIT tree
+.Bu
+set the environment variable "LD_PRELOAD=libau.so", or configure
+/etc/ld.so.preload
+.\" .Bu
+.\" set the environment variable "\*[LibAuEnv]=all"
+.Bu
+and run your application.
+.RE
+
+.SS VDIR/readdir(3) in user\-space (RDU)
 If you have a directory which has millions of files, aufs VDIR consumes
 much memory. You may meet "out of memory" message due to
 the memory fragmentation or real starvation.
@@ -1134,10 +1158,10 @@ In this case, RDU (readdir(3) in user\-space) may help you.
 Because the kernel memory space cannot be swappable and consuming much
 can be pure memory pressure, while it is not true in user\-space.
 
-If you enable CONFIG_AUFS_RDU at compiling aufs, and install libau.so in
-aufs2-util GIT tree (by "make install_ulib"), then you can use RDU.
-Just simply set the environment variable "LD_PRELOAD=libau.so"
-and run your application. The dynamic link library libau.so implements
+If you enable CONFIG_AUFS_RDU at compiling aufs, install libau.so, and
+set some environment variables, then you can use RDU.
+Just simply run your application.
+The dynamic link library libau.so implements
 another readdir routine, and all readdir(3) calls in your application
 will be handled by libau.so.
 
@@ -1160,6 +1184,22 @@ It is recommended to specify rdblk=0 when you use this library.
 If your directory is not so huge and you don't meet the out of memory
 situation, probably you don't need this library. The original VDIR in
 kernel\-space is still alive, and you can live without libau.so.
+
+.\" .SS pathconf(_PC_LINK_MAX)
+.\" Since some implementation of pathconf(3) (and fpathconf(3)) for
+.\" _PC_LINK_MAX decides the target filesystem type and returns the
+.\" pre\-defined constant value, when aufs is unknown to the library, it
+.\" will return the default value (127).
+.\" Actually the maximum link count number in aufs inherits the topmost
+.\" writable
+.\" branch filesystem's. But the standard pathconf(3) will not return the
+.\" correct value.
+.\" 
+.\" To support such case, libau.so provides a wrapper for pathconf(3) (and
+.\" fpathconf(3)). When the parameter is _PC_LINK_MAX, the wrapper checks
+.\" whether the given parameter refers aufs or not. If it is aufs, then
+.\" it will get the maximum link count from the topmost writable branch
+.\" internally. Otherwise, it behaves as normal pathconf(3) transparently.
 
 .SS Note
 Since this is a dynamically linked library, it is unavailable if your
