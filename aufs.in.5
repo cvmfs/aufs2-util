@@ -1133,8 +1133,8 @@ standard library functions such as,
 .RS
 .Bu
 readdir, readdir_r, closedir
-.\" .Bu
-.\" pathconf, fpathconf
+.Bu
+pathconf, fpathconf
 .RE
 
 To use libau.so,
@@ -1185,21 +1185,21 @@ If your directory is not so huge and you don't meet the out of memory
 situation, probably you don't need this library. The original VDIR in
 kernel\-space is still alive, and you can live without libau.so.
 
-.\" .SS pathconf(_PC_LINK_MAX)
-.\" Since some implementation of pathconf(3) (and fpathconf(3)) for
-.\" _PC_LINK_MAX decides the target filesystem type and returns the
-.\" pre\-defined constant value, when aufs is unknown to the library, it
-.\" will return the default value (127).
-.\" Actually the maximum link count number in aufs inherits the topmost
-.\" writable
-.\" branch filesystem's. But the standard pathconf(3) will not return the
-.\" correct value.
-.\" 
-.\" To support such case, libau.so provides a wrapper for pathconf(3) (and
-.\" fpathconf(3)). When the parameter is _PC_LINK_MAX, the wrapper checks
-.\" whether the given parameter refers aufs or not. If it is aufs, then
-.\" it will get the maximum link count from the topmost writable branch
-.\" internally. Otherwise, it behaves as normal pathconf(3) transparently.
+.SS pathconf(_PC_LINK_MAX)
+Since some implementation of pathconf(3) (and fpathconf(3)) for
+_PC_LINK_MAX decides the target filesystem type and returns the
+pre\-defined constant value, when aufs is unknown to the library, it
+will return the default value (127).
+Actually the maximum number of the link count in aufs inherits the
+topmost writable
+branch filesystem's. But the standard pathconf(3) will not return the
+correct value.
+
+To support such case, libau.so provides a wrapper for pathconf(3) (and
+fpathconf(3)). When the parameter is _PC_LINK_MAX, the wrapper checks
+whether the given parameter refers aufs or not. If it is aufs, then
+it will get the maximum link count from the topmost writable branch
+internally. Otherwise, it behaves as normal pathconf(3) transparently.
 
 .SS Note
 Since this is a dynamically linked library, it is unavailable if your
@@ -1207,13 +1207,15 @@ application is statically linked. And ld.so(8) ignores LD_PRELOAD when
 the application is setuid/setgid\-ed unless the library is not
 setuid/setgid\-ed. It is a generic rule of
 dynamically linked library.
-Additionally libau.so is unavailable in these cases too.
+Additionally the functions in libau.so are unavailable in these cases
+too.
 .RS
 .Bu
 the application or library issues getdents(2) instead of readdir(3).
 .Bu
-the library which implements readdir(3) calls it
-internally. e.g. scandir(3).
+the library which calls readdir(3) internally. e.g. scandir(3).
+.Bu
+the library which calls pathconf(3) internally.
 .RE
 
 

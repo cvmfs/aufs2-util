@@ -34,11 +34,12 @@ Man = aufs.5
 Etc = etc_default_aufs
 Bin = auplink mount.aufs #auctl
 BinObj = $(addsuffix .o, ${Bin})
-LibSoMajor = 1
-LibSoMinor = 3
+LibSoMajor = 2
+LibSoMinor = 1
 LibSo = libau.so
 LibSoObj = libau.o \
-	rdu_lib.o rdu.o rdu64.o
+	rdu_lib.o rdu.o rdu64.o \
+	pathconf.o
 LibSoHdr = libau.h rdu.h
 LibUtil = libautil.a
 LibUtilObj = proc_mnt.o br.o plink.o mtab.o
