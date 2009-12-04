@@ -34,18 +34,13 @@ Man = aufs.5
 Etc = etc_default_aufs
 Bin = auplink mount.aufs #auctl
 BinObj = $(addsuffix .o, ${Bin})
-LibSoMajor = 2
-LibSoMinor = 2
-LibSo = libau.so
-LibSoObj = libau.o \
-	rdu_lib.o rdu.o rdu64.o \
-	pathconf.o
-LibSoHdr = libau.h rdu.h
 LibUtil = libautil.a
 LibUtilObj = proc_mnt.o br.o plink.o mtab.o
 LibUtilHdr = au_util.h
 
-all: ${Man} ${Bin} ${Etc} ${LibSo}
+all: ${Man} ${Bin} ${Etc}
+	${MAKE} -C libau $@
+	ln -s ./libau/libau*.so .
 
 ${Bin}: LDFLAGS += -static -s
 ${Bin}: LDLIBS = -L. -lautil
@@ -54,21 +49,6 @@ ${BinObj}: %.o: %.c ${LibUtilHdr} ${LibUtil}
 ${LibUtilObj}: %.o: %.c ${LibUtilHdr}
 ${LibUtil}: ${LibUtil}(${LibUtilObj})
 .NOTPARALLEL: ${LibUtil}
-
-# this is unnecessary on 64bit system?
-rdu64.c: rdu.c
-	ln -sf $< $@
-rdu64.o: CFLAGS += -DRdu64
-.INTERMEDIATE.: rdu64.c
-
-${LibSoObj}: CFLAGS += -fPIC -DNDEBUG -D_REENTRANT
-${LibSoObj}: %.o: %.c ${LibSoHdr}
-${LibSo}: ${LibSo}.${LibSoMajor}
-	ln -sf $< $@
-${LibSo}.${LibSoMajor}: ${LibSo}.${LibSoMajor}.${LibSoMinor}
-	ln -sf $< $@
-${LibSo}.${LibSoMajor}.${LibSoMinor}: ${LibSoObj}
-	${CC} --shared -Wl,-soname,${LibSo}.${LibSoMajor} -o $@ $^ -ldl -lpthread
 
 etc_default_aufs: c2sh aufs.shlib
 	${RM} $@
@@ -109,21 +89,14 @@ install_man: Tgt = ${DESTDIR}/usr/share/man/man5
 install_man: ${File}
 	install -d ${Tgt}
 	${Install} -m 644 ${File} ${Tgt}
-install_ulib: File = ${LibSo} ${LibSo}.${LibSoMajor} \
-	${LibSo}.${LibSoMajor}.${LibSoMinor}
-install_ulib: Tgt = ${DESTDIR}/usr/lib
-install_ulib: ${File}
-	install -d ${Tgt}
-	${Install} -m 644 -s ${File} ${Tgt}
-	# -m 6755
+install_ulib:
+	${MAKE} -C libau $@
 
-# do not inlcude install_ulib here
-install: install_man install_sbin install_ubin install_etc
+install: install_man install_sbin install_ubin install_etc install_ulib
 
 clean:
-	${RM} ${Man} ${Bin} ${Etc} ${LibUtil} ${LibSo} *~
-	${RM} ${BinObj} ${LibUtilObj} ${LibSoObj}
-	${RM} ${LibSo}.${LibSoMajor} ${LibSo}.${LibSoMajor}.${LibSoMinor}
-	test -L rdu64.c && ${RM} rdu64.c || :
+	${RM} ${Man} ${Bin} ${Etc} ${LibUtil} *~
+	${RM} ${BinObj} ${LibUtilObj}
+	${MAKE} -C libau $@
 
 -include priv.mk
