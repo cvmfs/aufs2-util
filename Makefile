@@ -41,7 +41,7 @@ export
 
 all: ${Man} ${Bin} ${Etc}
 	${MAKE} -C libau $@
-	ln -s ./libau/libau*.so .
+	ln -sf ./libau/libau*.so .
 
 ${Bin}: LDFLAGS += -static -s
 ${Bin}: LDLIBS = -L. -lautil
@@ -96,7 +96,7 @@ install_ulib:
 install: install_man install_sbin install_ubin install_etc install_ulib
 
 clean:
-	${RM} ${Man} ${Bin} ${Etc} ${LibUtil} *~
+	${RM} ${Man} ${Bin} ${Etc} ${LibUtil} libau.so* *~
 	${RM} ${BinObj} ${LibUtilObj}
 	${MAKE} -C libau $@
 
