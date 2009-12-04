@@ -90,10 +90,10 @@ static int open_aufs_fd(const char *path, DIR **rdp)
 	 */
 	err = stat(path, &base);
 	if (err)
-		goto out;
+		goto out_fd;
 	parent = malloc(strlen(path) + sizeof("/.."));
 	if (!parent)
-		goto out;
+		goto out_fd;
 	l = strlen(path);
 	while (path[l - 1] == '/')
 		l--;
@@ -126,6 +126,15 @@ static int open_aufs_fd(const char *path, DIR **rdp)
 	free(parent);
 	errno = e;
 
+ out_fd:
+	if (err < 0) {
+		e = errno;
+		if (!dp)
+			close(fd); /* ignore */
+		else
+			closedir(dp); /* ignore */
+		errno = e;
+	}
  out:
 	return err;
 }
