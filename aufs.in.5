@@ -1150,6 +1150,9 @@ set the environment variable "\*[LibAuEnv]=all"
 and run your application.
 .RE
 
+If you use pathconf(3)/fpathconf(3) with _PC_LINK_MAX for aufs, you need
+to use libau.so.
+
 .SS VDIR/readdir(3) in user\-space (RDU)
 If you have a directory which has millions of files, aufs VDIR consumes
 much memory. You may meet "out of memory" message due to
