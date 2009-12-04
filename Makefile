@@ -25,7 +25,7 @@ endif
 ARCH := $(shell echo ${ARCH} | sed -e 's/_64$$//')
 ArchDir = ${KDIR}/arch/${ARCH}/include
 
-CFLAGS += -I${KDIR}/include
+CFLAGS += -I${KDIR}/include -I./libau
 CFLAGS += $(shell test -d ${ArchDir} && echo -I${ArchDir})
 CFLAGS += -O -Wall
 
@@ -37,6 +37,7 @@ BinObj = $(addsuffix .o, ${Bin})
 LibUtil = libautil.a
 LibUtilObj = proc_mnt.o br.o plink.o mtab.o
 LibUtilHdr = au_util.h
+export
 
 all: ${Man} ${Bin} ${Etc}
 	${MAKE} -C libau $@

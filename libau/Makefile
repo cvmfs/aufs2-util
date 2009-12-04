@@ -30,7 +30,7 @@ rdu64.c: rdu.c
 rdu64.o: CFLAGS += -DRdu64
 .INTERMEDIATE.: rdu64.c
 
-${LibSoObj}: CFLAGS += -fPIC -DNDEBUG -D_REENTRANT
+${LibSoObj}: CFLAGS += -fPIC -DNDEBUG -D_REENTRANT -I.
 ${LibSoObj}: %.o: %.c ${LibSoHdr}
 ${LibSo}: ${LibSo}.${LibSoMajor}
 	ln -sf $< $@
