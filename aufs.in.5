@@ -89,6 +89,7 @@ the process still refers the file on the lower(hidden)
 branch after adding the branch.
 If you want to update the contents of a process address space after
 adding, you need to restart your process or open/mmap the file again.
+This behaviour is same to the special files (currently FIFO only).
 .\" Usually, such files are executables or shared libraries.
 (cf. Branch Syntax).
 .
@@ -118,6 +119,7 @@ is mapping a file by mmap(2)
 on the branch, the process may or may not
 be able to modify its mapped memory region after modifying branch
 permission flags.
+This behaviour is same to the special files (currently FIFO only).
 Additioanlly when you enable CONFIG_IMA (in linux-2.6.30 and later), IMA
 may produce some wrong messages. But this is equivalent when the
 filesystem is changed `ro' in emergency.
