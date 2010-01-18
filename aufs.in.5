@@ -352,28 +352,6 @@ document about this feature. See Tips file in the aufs CVS tree.
 .\" ----------------------------------------------------------------------
 .SH Module Parameters
 .TP
-.B nwkq=N
-The number of kernel thread named \*[AUFS_WKQ_NAME].
-
-Those threads stay in the system while the aufs module is loaded,
-and handle the special I/O requests from aufs.
-The default value is \*[AUFS_NWKQ_DEF].
-
-The special I/O requests from aufs include a part of copy-up, lookup,
-directory handling, pseudo-link, xino file operations and the
-delegated access to branches.
-For example, Unix filesystems allow you to rmdir(2) which has no write
-permission bit, if its parent directory has write permission bit. In aufs, the
-removing directory may or may not have whiteout or `dir opaque' mark as its
-child. And aufs needs to unlink(2) them before rmdir(2).
-Therefore aufs delegates the actual unlink(2) and rmdir(2) to another kernel
-thread which has been created already and has a superuser privilege.
-
-If you enable CONFIG_SYSFS, you can check this value through
-<sysfs>/module/aufs/parameters/nwkq.
-
-.
-.TP
 .B brs=1 | 0
 Specifies to use the branch path data file under sysfs or not.
 

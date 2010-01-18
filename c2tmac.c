@@ -36,7 +36,6 @@ main(int argc, char *argv[])
 	pint(AUFS_WH_TMP_LEN);
 	pint(AUFS_MAX_NAMELEN);
 	pstr(AUFS_WKQ_NAME);
-	pint(AUFS_NWKQ_DEF);
 	pstr(AUFS_WH_DIROPQ);
 	pstr(AUFS_WH_BASE);
 	pstr(AUFS_WH_PLINKDIR);
