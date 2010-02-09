@@ -115,7 +115,7 @@ _move()
 	set +x
 	test $hinotify -ne 1 && echo ${me}: warning, -i is not specified
 	src_is_nfs=0
-	test $(stat -f -c %T "$src") = nfs && src_is_nfs=1
+	test "$(stat -f -c %T "$src")" = "nfs" && src_is_nfs=1
 	set $quiet
 
 	$Move $@ &&
