@@ -1219,6 +1219,14 @@ You may see the message when you change the xino file path or
 truncate the xino/xib files. Sometimes those files can be large and may
 take a long time to handle them.
 
+\" .SS a regular file in HFSPLUS
+\" HFSPLUS acquires an inode mutex lock at closing a file. This behaviour
+\" is not a problem, but aufs doesn't expect such behaviour and it had
+\" caused a deadlock. So aufs added a special handling to copy\-up a
+\" regular file in HFSPLUS, eg. opens the file internally twice. It means
+\" there exists an additional overhead in copying a regular file in HFSPLUS.
+
+
 .\" ----------------------------------------------------------------------
 .SH Policies to Select One among Multiple Writable Branches
 Aufs has some policies to select one among multiple writable branches
