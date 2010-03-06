@@ -178,6 +178,39 @@ a branch.
 (cf. External Inode Number Bitmap, Translation Table and Generation Table).
 .
 .TP
+.B trunc_xino_path=BRANCH | itrunc_xino=INDEX
+Truncate the external inode number translation table per branch. The
+branch can be specified by path or index (its origin is 0).
+Sometimes the size of a xino file for tmpfs branch grows very big. If
+you don't like such situation, try "mount -o
+remount,trunc_xino_path=BRANCH /your/aufs" (or itrunc_xino=INDEX). It
+will shrink the xino file for BRANCH. These options are one time
+actions. So the size may grow again. In order to make it work
+automatically when necessary, try trunc_xino option.
+These options are already implemented, but its design is not fixed
+(cf. External Inode Number Bitmap, Translation Table and Generation Table).
+.
+.TP
+.B trunc_xino | notrunc_xino
+Enable (or disable) the automatic truncation of xino files.
+The truncation is done by discarding the internal "hole" (unused blocks).
+When the number of blocks by the xino file for the branch exceeds
+the predefined upper limit, the automatic truncation begins. If the xino
+files contain few holes and the result size is still exceeds the upper
+limit, then the upper limit is added by \*[AUFS_XINO_TRUNC_STEP] blocks. The
+initial upper limit is \*[AUFS_XINO_TRUNC_INIT] blocks.
+Currently the type of branch fs supported by this automatic truncation
+is tmpfs or ramfs only.
+The default is notrunc_xino.
+These options are already implemented, but its design is not fixed
+(cf. External Inode Number Bitmap, Translation Table and Generation Table).
+
+TODO: costomizable two values for upper limit
+\" .
+\" .TP
+\" .B trunc_xino_v=n:n
+.
+.TP
 .B create_policy | create=CREATE_POLICY
 .TQ
 .B copyup_policy | copyup | cpup=COPYUP_POLICY
@@ -676,7 +709,7 @@ Also if you are going to remove the branch where xino files exist or
 change the branch permission to readonly, you need to use xino option
 before del/mod the branch.
 
-The bitmap file can be truncated.
+The bitmap file and the table can be truncated.
 For example, if you delete a branch which has huge number of files,
 many inode numbers will be recycled and the bitmap will be truncated
 to smaller size. Aufs does this automatically when a branch is
@@ -686,6 +719,8 @@ option. But when the accessed inode number was not deleted, nothing
 will be truncated.
 If you do not want to truncate it (it may be slow) when you delete a
 branch, specify `notrunc_xib' after `del' mount option.
+For the table, see trunc_xino_path=BRANCH, itrunc_xino=INDEX, trunc_xino
+and notrunc_xino option.
 
 If you do not want to use xino, use noxino mount option. Use this
 option with care, since the inode number may be changed silently and
