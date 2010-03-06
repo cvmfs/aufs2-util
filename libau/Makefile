@@ -48,5 +48,5 @@ install_ulib: ${File}
 	# -m 6755
 
 clean:
-	${RM} ${LibSo}.* ${LibSoObj} *~
+	${RM} ${LibSo} ${LibSo}.* ${LibSoObj} *~
 	test -L rdu64.c && ${RM} rdu64.c || :
