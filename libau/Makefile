@@ -36,8 +36,10 @@ ${LibSo}: ${LibSo}.${LibSoMajor}
 	ln -sf $< $@
 ${LibSo}.${LibSoMajor}: ${LibSo}.${LibSoMajor}.${LibSoMinor}
 	ln -sf $< $@
+${LibSo}.${LibSoMajor}.${LibSoMinor}: LDLIBS += -ldl -lpthread
 ${LibSo}.${LibSoMajor}.${LibSoMinor}: ${LibSoObj}
-	${CC} $(LDFLAGS) --shared -Wl,-soname,${LibSo}.${LibSoMajor} -o $@ $^ -ldl -lpthread
+	${LD} --shared -soname,${LibSo}.${LibSoMajor} ${LDFLAGS} \
+		-o $@ $^ ${LDLIBS}
 
 install_ulib: File = ${LibSo} ${LibSo}.${LibSoMajor} \
 	${LibSo}.${LibSoMajor}.${LibSoMinor}
