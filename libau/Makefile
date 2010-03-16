@@ -37,7 +37,7 @@ ${LibSo}: ${LibSo}.${LibSoMajor}
 ${LibSo}.${LibSoMajor}: ${LibSo}.${LibSoMajor}.${LibSoMinor}
 	ln -sf $< $@
 ${LibSo}.${LibSoMajor}.${LibSoMinor}: ${LibSoObj}
-	${CC} --shared -Wl,-soname,${LibSo}.${LibSoMajor} -o $@ $^ -ldl -lpthread
+	${CC} $(LDFLAGS) --shared -Wl,-soname,${LibSo}.${LibSoMajor} -o $@ $^ -ldl -lpthread
 
 install_ulib: File = ${LibSo} ${LibSo}.${LibSoMajor} \
 	${LibSo}.${LibSoMajor}.${LibSoMinor}
