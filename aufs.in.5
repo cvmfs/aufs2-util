@@ -1041,17 +1041,17 @@ recommended to flush the pseudo-links by auplink script.
 Unfortunately, current inotify (linux\-2.6.18) has some limitations,
 and aufs must derive it.
 
-.SS IN_ATTRIB, updating atime
-When a file/dir on a branch is accessed directly, the inode atime (access
-time, cf. stat(2)) may or may not be updated. In some cases, inotify
-does not fire this event. So the aufs inode atime may remain old.
+\" .SS IN_ATTRIB, updating atime
+\" When a file/dir on a branch is accessed directly, the inode atime (access
+\" time, cf. stat(2)) may or may not be updated. In some cases, inotify
+\" does not fire this event. So the aufs inode atime may remain old.
 
-.SS IN_ATTRIB, updating nlink
-When the link count of a file on a branch is incremented by link(2)
-directly,
-inotify fires IN_CREATE to the parent
-directory, but IN_ATTRIB to the file. So the aufs inode nlink may
-remain old.
+\" .SS IN_ATTRIB, updating nlink
+\" When the link count of a file on a branch is incremented by link(2)
+\" directly,
+\" inotify fires IN_CREATE to the parent
+\" directory, but IN_ATTRIB to the file. So the aufs inode nlink may
+\" remain old.
 
 .SS IN_DELETE, removing file on NFS
 When a file on a NFS branch is deleted directly, inotify may or may
