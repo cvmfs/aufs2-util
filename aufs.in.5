@@ -34,13 +34,13 @@ approaches to aufs's.
 At mount-time, the order of interpreting options is,
 .RS
 .Bu
-simple flags, except xino/noxino and udba=inotify
+simple flags, except xino/noxino and udba=notify
 .Bu
 branches
 .Bu
 xino/noxino
 .Bu
-udba=inotify
+udba=notify
 .RE
 
 At remount-time,
@@ -333,7 +333,7 @@ mount(8) and umount(8) support them,
 (cf. Pseudo Link)
 .
 .TP
-.B udba=none | reval | inotify
+.B udba=none | reval | notify
 Specifies the level of UDBA (User's Direct Branch Access) test.
 (cf. User's Direct Branch Access and Inotify Limitation).
 .
@@ -502,8 +502,8 @@ both of write operation and lookup operation for whiteout to this branch.
 .B rr
 Real readonly branch, special case of `ro', for natively readonly
 branch. Assuming the branch is natively readonly, aufs can optimize
-some internal operation. For example, if you specify `udba=inotify'
-option, aufs does not set inotify for the things on rr branch.
+some internal operation. For example, if you specify `udba=notify'
+option, aufs does not set fsnotify or inotify for the things on rr branch.
 Set by default for a branch whose fs-type is either `iso9660',
 `cramfs' or `romfs' (and `squashfs' for linux\-2.6.29 and later).
 
@@ -998,15 +998,15 @@ temporary and minor differences between virtual aufs world and real
 branch filesystem, then try this mount option.
 .
 .TP
-.B udba=inotify
-Aufs sets `inotify' to all the accessed directories on its branches
+.B udba=notify
+Aufs sets either `fsnotify' or `inotify' to all the accessed directories on its branches
 and receives the event about the dir and its children. It consumes
 resources, cpu and memory. And I am afraid that the performance will be
 hurt, but it is most strict test level.
 There are some limitations of linux inotify, see also Inotify
 Limitation.
 So it is recommended to leave udba default option usually, and set it
-to inotify by remount when you need it.
+to notify by remount when you need it.
 
 When a user accesses the file which was notified UDBA before, the cached data
 about the file will be discarded and aufs re-lookup it. So the data will
@@ -1015,6 +1015,11 @@ When an error condition occurs between UDBA and aufs operation, aufs
 will return an error, including EIO.
 To use this option, you need to enable CONFIG_INOTIFY and
 CONFIG_AUFS_HINOTIFY.
+In linux-2.6.31, CONFIG_FSNOTIFY was introduced and CONFIG_INOTIFY was
+listed in Documentation/feature-removal-schedule.txt. In aufs2-31 and
+later (until CONFIG_INOTIFY is removed actually), you can choose either
+`fsnotify' or `inotify' in configuration. Whichever you choose, specify
+`udba=notify', and aufs interprets it as an abstract name.
 
 To rename/rmdir a directory on a branch directory may reveal the same named
 directory on the lower branch. Aufs tries re-lookuping the renamed
@@ -1758,7 +1763,7 @@ should be writable.
 .\" reach the end of inode number which is a maximum of unsigned long. If
 .\" the inode number reaches the end, aufs will return EIO repeatedly.
 
-When you set udba other than inotify and change something on your
+When you set udba other than notify and change something on your
 branch filesystem directly, later aufs may detect some mismatches to
 its cache. If it is a critical mismatch, aufs returns EIO.
 
