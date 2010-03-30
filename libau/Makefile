@@ -41,13 +41,14 @@ ${LibSo}.${LibSoMajor}.${LibSoMinor}: ${LibSoObj}
 	${LD} --shared -soname,${LibSo}.${LibSoMajor} ${LDFLAGS} \
 		-o $@ $^ ${LDLIBS}
 
-install_ulib: File = ${LibSo} ${LibSo}.${LibSoMajor} \
-	${LibSo}.${LibSoMajor}.${LibSoMinor}
+install_ulib: File = ${LibSo}.${LibSoMajor}.${LibSoMinor}
 install_ulib: Tgt = ${DESTDIR}/usr/lib
 install_ulib: ${File}
 	install -d ${Tgt}
 	${Install} -m 644 -s ${File} ${Tgt}
 	# -m 6755
+	ln -sf ${File} ${Tgt}/${LibSo}.${LibSoMajor}
+	ln -sf ${LibSo}.${LibSoMajor} ${Tgt}/${LibSo}
 
 clean:
 	${RM} ${LibSo} ${LibSo}.* ${LibSoObj} *~
