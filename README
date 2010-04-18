@@ -10,7 +10,10 @@ detail.
 
 Makefile in this tree has some customizable make-variables.
 - KDIR
-  specify your kernel source path if necessary
+  specify your kernel source path if necessary.
+  Note: this path should point kernel _source_ path, instead of kernel
+  _build_ path. Don't confuse with the path in "make O=<kdir>" when you
+  build a kernel in a different dir.
 - CPPFLAGS or ARCH
   specify the include path to your aufs2-standalone tree, if necessary.
   the makefile finds the correct ${KDIR}/arch/${ARCH}/include dir and

@@ -18,6 +18,9 @@
 ifndef KDIR
 KDIR = /lib/modules/$(shell uname -r)/build
 endif
+ifneq "t" "$(shell test -e ${KDIR}/include/linux/stddef.h && echo t)"
+$(error incorrect KDIR)
+endif
 
 ifndef ARCH
 ARCH := $(shell uname -m)
