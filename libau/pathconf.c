@@ -206,6 +206,5 @@ long fpathconf(int fd, int name)
 	else if (!libau_dl_fpathconf())
 		ret = real_fpathconf(fd, name);
 
- out:
 	return ret;
 }
