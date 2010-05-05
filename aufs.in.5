@@ -221,6 +221,20 @@ try keeping their operations in the branch where the source exists.
 (cf. Policies to Select One among Multiple Writable Branches).
 .
 .TP
+.B dio
+Enable Direct I/O support (including Linux AIO), and always make open(2)
+with O_DIRECT success. But if your branch filessystem doesn't support
+it, then the succeeding I/O will fail
+(cf, Direct I/O).
+.
+.TP
+.B nodio
+Disable Direct I/O (including Linux AIO), and always make open(2) with
+O_DIRECT fail.
+This is default value
+(cf, Direct I/O).
+.
+.TP
 .B verbose | v
 Print some information.
 Currently, it is only busy file (or inode) at deleting a branch.
@@ -1423,6 +1437,46 @@ The branch filesystems must be accessible, which means `not hidden.'
 It means you need to `mount \-\-move' when you use initramfs and
 switch_root(8), or chroot(8).
 .RE
+
+
+.\" ----------------------------------------------------------------------
+.SH Direct I/O
+The Direct I/O (including Linux AIO) is a
+filesystem (and its backend block device) specific feature.
+And there is a minor problem around the aufs internal
+copyup. If you have two branches, lower RO ext2 and upper RW tmpfs. As
+you know ext2 supports Direct I/O, but tmpfs doesn't. When a
+`fileA' exists in the lower ext2, and you write something into after
+opening it with
+O_DIRECT, then aufs behaves like this if the mount option `dio' is specified.
+.RS
+.Bu
+The application issues open(O_DIRECT);
+
+Aufs opens the file in the lower ext2 and succeeds.
+.Bu
+The application issues write("something");
+
+Aufs copies-up the file from the lower ext2 to the upper tmpfs, and re-opens the
+file in tmpfs with O_DIRECT. It fails and returns an error.
+.RE
+
+This behaviour may be a problem since application expects the error
+should be returned from the first open(2) instead of the later
+write(2), when the filesystem doesn't support Direct I/O.
+(But, in real world, I don't think there is an application
+which doesn't check the error from write(2). So it won't be a big
+problem actually).
+
+If the file exists in the upper tmpfs, the first open(2) will fail
+expectedly. So there is no problem in this case. But the problem may
+happen when the internal copyup happens and the behaviour of the branch
+differs from each other. As long as the feature depends upon the filesystem, this
+problem will not be solved. So aufs sets `nodio` by default, which means
+all Direct I/O are disabled, and oepn(2) with O_DIRECT always fails. If
+you want to use Direct I/O
+AND all your writeble branches support it, then specify `dio' option to
+make it in effect.
 
 
 .\" ----------------------------------------------------------------------
