@@ -97,10 +97,9 @@ static int rdu_readdir(DIR *dir, struct Rdu_DIRENT *de, struct Rdu_DIRENT **rde)
 			}
 		}
 		err = rdu_pos(de, p, pos);
-		if (!err) {
+		if (!err)
 			*rde = de;
-			seekdir(dir, pos + 1);
-		}
+		seekdir(dir, pos + 1);
 		rdu_unlock(p);
 		errno = 0;
 	} else if (!de) {
