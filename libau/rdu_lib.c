@@ -39,10 +39,10 @@ static int rdu_getent(struct rdu *p, struct aufs_rdu *param)
 {
 	int err;
 
-	DPri("param{%llu, %p, (%u, %u) | %u | %p, %llu, %u, %d |"
+	DPri("param{%llu, %p, %u | %u | %p, %llu, %u, %d |"
 	     " %llu, %d, 0x%x, %u}\n",
 	     param->sz, param->ent.e,
-	     param->verify[0], param->verify[1],
+	     param->verify[AufsCtlRduV_SZ],
 	     param->blk,
 	     param->tail.e, param->rent, param->shwh, param->full,
 	     param->cookie.h_pos, param->cookie.bindex, param->cookie.flags,
@@ -50,10 +50,10 @@ static int rdu_getent(struct rdu *p, struct aufs_rdu *param)
 
 	err = ioctl(p->fd, AUFS_CTL_RDU, param);
 
-	DPri("param{%llu, %p, (%u, %u) | %u | %p, %llu, %u, %d |"
+	DPri("param{%llu, %p, %u | %u | %p, %llu, %u, %d |"
 	     " %llu, %d, 0x%x, %u}\n",
 	     param->sz, param->ent.e,
-	     param->verify[0], param->verify[1],
+	     param->verify[AufsCtlRduV_SZ],
 	     param->blk,
 	     param->tail.e, param->rent, param->shwh, param->full,
 	     param->cookie.h_pos, param->cookie.bindex, param->cookie.flags,
@@ -350,7 +350,6 @@ int rdu_init(struct rdu *p, int want_de)
 
 	memset(&param, 0, sizeof(param));
 	param.verify[AufsCtlRduV_SZ] = sizeof(param);
-	param.verify[AufsCtlRduV_SZ_PTR] = sizeof(t);
 	param.sz = p->sz;
 	param.ent = p->ent;
 	param.tail = param.ent;
