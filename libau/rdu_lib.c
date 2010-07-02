@@ -284,11 +284,19 @@ static void rdu_tfree(void *node)
 static int rdu_merge(struct rdu *p)
 {
 	int err;
-	unsigned long ul;
+	unsigned long long ul;
 	union au_rdu_ent_ul u;
 	void *t;
 
 	err = -1;
+#if 0
+	u = p->ent;
+	for (ul = 0; ul < p->npos; ul++) {
+		DPri("%p, %.*s\n", u.e, u.e->nlen, u.e->name);
+		u.ul += au_rdu_len(u.e->nlen);
+	}
+#endif
+
 	p->pos = realloc(p->pos, sizeof(*p->pos) * p->npos);
 	if (!p->pos)
 		goto out;
@@ -343,7 +351,7 @@ static int rdu_merge(struct rdu *p)
 int rdu_init(struct rdu *p, int want_de)
 {
 	int err;
-	unsigned long used;
+	unsigned long long used;
 	struct aufs_rdu param;
 	char *t;
 	struct au_rdu_ent *e;
@@ -379,7 +387,7 @@ int rdu_init(struct rdu *p, int want_de)
 		e = realloc(p->ent.e, p->sz + param.blk);
 		if (e) {
 			used = param.tail.ul - param.ent.ul;
-			DPri("used %lu\n", used);
+			DPri("used %llu\n", used);
 			param.sz += param.blk - used;
 			DPri("sz %llu\n", param.sz);
 			used += param.ent.ul - p->ent.ul;
@@ -416,6 +424,15 @@ int rdu_init(struct rdu *p, int want_de)
 	if (err) {
 		free(p->ent.e);
 		p->ent.e = NULL;
+#if 0
+	} else {
+		unsigned long long ull;
+		struct au_rdu_ent *e;
+		for (ull = 0; ull < p->npos; ull++) {
+			e = p->pos[ull];
+			DPri("%p, %.*s\n", e, e->nlen, e->name);
+		}
+#endif
 	}
 
  out:
