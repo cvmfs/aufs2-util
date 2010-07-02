@@ -168,8 +168,13 @@ struct rdu *rdu_buf_lock(int fd)
 
  out:
 	rdu_lib_unlock();
-	if (p)
+	if (p) {
 		rdu_write_lock(p);
+		if (p->fd < 0) {
+			rdu_unlock(p);
+			p = NULL;
+		}
+	}
 
 	return p;
 }
