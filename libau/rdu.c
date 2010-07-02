@@ -84,9 +84,6 @@ static int rdu_readdir(DIR *dir, struct Rdu_DIRENT *de, struct Rdu_DIRENT **rde)
 			}
 		}
 
-		rdu_lib_lock();
-		rdu_dgrade_lock(p);
-		rdu_lib_unlock();
 		if (!de) {
 			de = p->de;
 			if (!de) {

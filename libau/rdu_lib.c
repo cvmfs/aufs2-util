@@ -167,9 +167,9 @@ struct rdu *rdu_buf_lock(int fd)
 		p = rdu_new(fd);
 
  out:
+	rdu_lib_unlock();
 	if (p)
 		rdu_write_lock(p);
-	rdu_lib_unlock();
 
 	return p;
 }
