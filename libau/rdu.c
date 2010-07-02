@@ -31,7 +31,7 @@ static int rdu_pos(struct Rdu_DIRENT *de, struct rdu *p, long pos)
 	struct au_rdu_ent *ent;
 
 	err = -1;
-	if (pos <= p->npos) {
+	if (pos < p->npos) {
 		ent = p->pos[pos];
 		de->d_ino = ent->ino;
 		de->d_off = pos;

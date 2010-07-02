@@ -311,19 +311,29 @@ static int rdu_merge(struct rdu *p)
 	}
 	tdestroy(p->real, rdu_tfree);
 	tdestroy(p->wh, rdu_tfree);
-
-	if (!err) {
-		p->npos = p->idx - 1;
-
-		if (p->npos) {
-			/* t == NULL is not an error */
-			t = realloc(p->pos, sizeof(*p->pos) * p->idx);
-			if (t)
-				p->pos = t;
-		}
-	} else {
+	if (err) {
 		free(p->pos);
 		p->pos = NULL;
+		goto out;
+	} else if (p->idx == p->npos)
+		goto out; /* success */
+
+	p->npos = p->idx;
+	/* t == NULL is not an error */
+	t = realloc(p->pos, sizeof(*p->pos) * p->idx);
+	if (t)
+		p->pos = t;
+
+	u = p->ent;
+	for (ul = 0; ul < p->npos; ul++) {
+		if (p->pos[ul] != u.e)
+			break;
+		u.ul += au_rdu_len(u.e->nlen);
+	}
+	for (; ul < p->npos; ul++) {
+		memmove(u.e, p->pos[ul], au_rdu_len(p->pos[ul]->nlen));
+		p->pos[ul] = u.e;
+		u.ul += au_rdu_len(u.e->nlen);
 	}
 
  out:
