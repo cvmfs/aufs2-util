@@ -376,8 +376,10 @@ int rdu_init(struct rdu *p, int want_de)
 			param.tail = param.ent;
 			p->sz += param.blk;
 			DPri("sz %llu\n", p->sz);
-		} else
+		} else {
 			err = -1;
+			break;
+		}
 	}
 
 	p->shwh = param.shwh;
