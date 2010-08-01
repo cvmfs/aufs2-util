@@ -1099,6 +1099,11 @@ object. So the file object has its entry list until it is closed. The
 entry list will be updated when the file position is zero (by
 rewinddir(3)) and becomes obsoleted.
 
+The merged result is cached in the corresponding inode object and
+maintained by a customizable life-time option.
+Note: the mount option `rdcache=<sec>' is still under considering and
+its description is hidden from this manual.
+
 Some people may call it can be a security hole or invite DoS attack
 since the opened and once readdir\-ed dir (file object) holds its entry
 list and becomes a pressure for system memory. But I would say it is similar
