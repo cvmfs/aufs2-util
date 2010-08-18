@@ -17,41 +17,14 @@
 
 # library functions for aufs shell scripts
 
-LibAuInit()
+# path in canonical representation
+# note: bash builtin "pwd -P" modies $PWD unexpectedly
+SetDir() # var dir
 {
-	local d=/tmp
-	{
-	local prev="$(set +o | fgrep -w nounset)"
-	set +u
-	test "$TMPDIR" -a -d "$TMPDIR" && d="$TMPDIR"
-	$prev
-	}
-	d="$d/libauinit.$$"
-	mkdir -p "$d/d"
-	ln -s ./d "$d/l"
-	cd "$d/l"
-	if [ "$PWD" = "$d/d" ]
-	then
-		# path in canonical representation
-		SetDir() # var dir
-		{
-			cd "$2"
-			eval "$1=\"$PWD\""
-			cd "$OLDPWD"
-		}
-	else
-		SetDir() # var dir
-		{
-			cd "$2"
-			# bash builtin pwd -P modies PWD unexpectedly
-			eval "$1=$(/bin/pwd)"
-			cd "$OLDPWD"
-		}
-	fi
+	cd "$2"
+	eval "$1=\"$(pwd -P)\""
 	cd "$OLDPWD"
-	rm -fr "$d"
 }
-LibAuInit
 
 # escape the unprintable characters, mainly for grep-ping /proc/mounts
 Esc() # [-e]
