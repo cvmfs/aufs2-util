@@ -15,21 +15,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301	 USA
 
-ifndef KDIR
-KDIR = /lib/modules/$(shell uname -r)/build
-endif
-ifneq "t" "$(shell test -e ${KDIR}/include/linux/stddef.h && echo t)"
-$(error incorrect KDIR)
-endif
-
-ifndef ARCH
-ARCH := $(shell uname -m)
-endif
-ARCH := $(shell echo ${ARCH} | sed -e 's/_64$$//')
-ArchDir = ${KDIR}/arch/${ARCH}/include
-
-CFLAGS += -I${KDIR}/include -I./libau
-CFLAGS += $(shell test -d ${ArchDir} && echo -I${ArchDir})
+CFLAGS += -I./libau
 CFLAGS += -O -Wall
 
 Cmd = umount.aufs auchk aubrsync
