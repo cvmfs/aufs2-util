@@ -18,13 +18,14 @@
 
 #include <linux/aufs_type.h>
 #include <stdio.h>
+#include <string.h>
 #include "au_util.h"
 
 int main(int argc, char *argv[])
 {
-	if ((AUFS_VERSION[0] == '2')
-	    && (sizeof(AUFS_VERSION) - 1 == 1
-		|| AUFS_VERSION[1] == '-'))
+	if (!strncmp(AUFS_VERSION, "2.1", 3)
+	    && (sizeof(AUFS_VERSION) - 1 == 3
+		|| AUFS_VERSION[3] == '-'))
 		return 0;
 
 	puts("Wrong version!\n"
