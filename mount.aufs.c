@@ -154,6 +154,7 @@ int main(int argc, char *argv[])
 	DIR *cur;
 
 	if (argc < 3) {
+		puts(AuVersion);
 		errno = EINVAL;
 		AuFin(NULL);
 	}

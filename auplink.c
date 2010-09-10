@@ -30,7 +30,8 @@ static void usage(char *me)
 		"'list' shows the pseudo-linked inode numbers and filenames.\n"
 		"'cpup' copies-up all pseudo-link to the writeble branch.\n"
 		"'flush' calls 'cpup', and then 'mount -o remount,clean_plink=inum'\n"
-		"and remove the whiteouted plink.\n", me);
+		"and remove the whiteouted plink.\n"
+		AuVersion "\n", me);
 	exit(EINVAL);
 }
 

@@ -22,6 +22,8 @@
 #include <errno.h>
 #include <error.h>
 
+#define AuVersion "aufs2-util for aufs2(.0)"
+
 /*
  * error_at_line() is decleared with (__printf__, 5, 6) attribute,
  * and our compiler produces a warning unless args is not given.

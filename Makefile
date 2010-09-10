@@ -28,9 +28,12 @@ LibUtilObj = proc_mnt.o br.o plink.o mtab.o
 LibUtilHdr = au_util.h
 export
 
-all: ${Man} ${Bin} ${Etc}
+all: ver_test ${Man} ${Bin} ${Etc}
 	${MAKE} -C libau $@
 	ln -sf ./libau/libau*.so .
+
+ver_test: ver
+	./ver
 
 ${Bin}: LDFLAGS += -static -s
 ${Bin}: LDLIBS = -L. -lautil
@@ -59,7 +62,7 @@ aufs.5: aufs.in.5 c2tmac
 	}' aufs.in.5 >> $@
 	chmod a-w $@
 
-.INTERMEDIATE: c2sh c2tmac
+.INTERMEDIATE: c2sh c2tmac ver
 
 Install = install -o root -g root -p
 install_sbin: File = mount.aufs umount.aufs auplink
