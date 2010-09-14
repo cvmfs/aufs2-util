@@ -178,8 +178,11 @@ int main(int argc, char *argv[])
 			flags[Verbose] = 1;
 			break;
 		case 'o':
-			opts = optarg;
-			break;
+			if (!opts) {
+				opts = optarg;
+				break;
+			}
+			/*FALLTHROUGH*/
 		case '?':
 		case ':':
 			errno = EINVAL;
