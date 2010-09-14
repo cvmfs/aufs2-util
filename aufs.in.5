@@ -799,6 +799,18 @@ If you installed both of /sbin/mount.aufs and /sbin/umount.aufs, and your
 mount(8) and umount(8) support them,
 `auplink' utility will be executed automatically and flush pseudo-links.
 
+During this utility is running, it puts aufs into the pseudo-link
+maintenance mode. In this mode, only the process which began the
+maintenance mode (and its child processes) is allowed to operate in
+aufs. Some other processes which are not related to the pseudo-link will
+be allowed to run too, but the rest have to return an error or wait
+until the maintenance mode ends. If a process already acquires an inode
+mutex (in VFS), it has to return an error.
+
+Due to the fact that the pseudo-link maintenance mode is operated via
+procfs, the pseudo-link feature itself (including the related mount
+options) depends upon CONFIG_PROC_FS too.
+
 .nf
 # auplink /your/aufs/root flush
 # umount /your/aufs/root
