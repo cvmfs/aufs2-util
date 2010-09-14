@@ -18,10 +18,10 @@
 CFLAGS += -I./libau
 CFLAGS += -O -Wall
 
-Cmd = umount.aufs auchk aubrsync
+Cmd = auchk aubrsync
 Man = aufs.5
 Etc = etc_default_aufs
-Bin = auplink mount.aufs #auctl
+Bin = auplink mount.aufs umount.aufs #auctl
 BinObj = $(addsuffix .o, ${Bin})
 LibUtil = libautil.a
 LibUtilObj = proc_mnt.o br.o plink.o mtab.o

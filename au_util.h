@@ -52,7 +52,6 @@ enum {
 	AuPlink_LIST
 };
 int au_plink(char cwd[], int cmd, int begin_maint, int end_maint);
-void au_plink_maint(char *path);
 
 /* mtab.c */
 void au_print_ent(struct mntent *ent);

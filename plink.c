@@ -25,6 +25,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <dirent.h>
+#include <fcntl.h>
 #include <ftw.h>
 #include <mntent.h>
 #include <stdio.h>
@@ -203,41 +204,39 @@ static int ftw_cpup(const char *fname, const struct stat *st, int flags,
 
 /* ---------------------------------------------------------------------- */
 
-static DIR *dp;
-void au_plink_maint(char *path)
+static int proc_fd = -1;
+static void au_plink_maint(char *si)
 {
 	int err;
+	ssize_t ssz;
 
-	if (path) {
-		if (dp) {
+	if (si) {
+		if (proc_fd >= 0) {
 			errno = EINVAL;
-			AuFin("dp is not NULL");
+			AuFin("proc_fd is not NULL");
 		}
-		dp = opendir(path);
-		if (!dp)
-			AuFin("%s", path);
-
-		err = ioctl(dirfd(dp), AUFS_CTL_PLINK_MAINT);
-#ifndef DEBUG
-		if (err)
-			AuFin("AUFS_CTL_PLINK_MAINT");
-#endif
+		proc_fd = open("/proc/" AUFS_PLINK_MAINT_PATH, O_WRONLY);
+		if (proc_fd < 0)
+			AuFin("proc");
+		ssz = write(proc_fd, si, strlen(si));
+		if (ssz != strlen(si))
+			AuFin("write");
 	} else {
-		err = closedir(dp);
+		err = close(proc_fd);
 		if (err)
-			AuFin("closedir");
-		dp = NULL;
+			AuFin("close");
+		proc_fd = -1;
 	}
 }
 
 void au_clean_plink(void)
 {
-	int err;
+	ssize_t ssz;
 
-	err = ioctl(dirfd(dp), AUFS_CTL_PLINK_CLEAN);
+	ssz = write(proc_fd, "clean", 5);
 #ifndef DEBUG
-	if (err)
-		AuFin("AUFS_CTL_PLINK_CLEAN");
+	if (ssz != 5)
+		AuFin("clean");
 #endif
 }
 
@@ -323,17 +322,29 @@ int au_plink(char cwd[], int cmd, int begin_maint, int end_maint)
 {
 	int err, nbr;
 	struct mntent ent;
-	char **br;
-
-	if (begin_maint)
-		au_plink_maint(cwd);
+	char **br, *p, si[3 + sizeof(unsigned long long) * 2 + 1];
 
 	err = au_proc_getmntent(cwd, &ent);
 	if (err)
 		AuFin("no such mount point");
-
 	if (hasmntopt(&ent, "noplink"))
 		goto out; /* success */
+
+	if (begin_maint) {
+		p = hasmntopt(&ent, "si");
+		if (!p)
+			AuFin("internal error");
+		strncpy(si, p, sizeof(si));
+		p = strchr(si, ',');
+		if (p)
+			*p = 0;
+		au_plink_maint(si);
+
+		/* someone else may modify while we were sleeping */
+		err = au_proc_getmntent(cwd, &ent);
+		if (err)
+			AuFin("no such mount point");
+	}
 
 #ifdef DEBUG
 	//char a[] = "a,b,br:/tmp/br0=rw:/br1=ro";
@@ -349,8 +360,9 @@ int au_plink(char cwd[], int cmd, int begin_maint, int end_maint)
 	if (err)
 		AuFin(NULL);
 
- out:
 	if (end_maint)
 		au_plink_maint(NULL);
+
+out:
 	return err;
 }

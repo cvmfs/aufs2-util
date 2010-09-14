@@ -219,7 +219,7 @@ int main(int argc, char *argv[])
 			AuFin("both of remount and bind are specified");
 		flags[AuFlush] = test_flush(opts);
 		if (flags[AuFlush] /* && !flags[Fake] */) {
-			err = au_plink(cwd, AuPlink_FLUSH, 1, 1);
+			err = au_plink(cwd, AuPlink_FLUSH, 1, 0);
 			if (err)
 				AuFin(NULL);
 		}

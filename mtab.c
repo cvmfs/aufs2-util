@@ -91,8 +91,6 @@ static void update_mtab(FILE *fp, char *mntpnt, int do_remount, int do_verbose)
 	FILE *ofp;
 	struct mntent ent, *p;
 
-	/* prohibit updating mount options for this mntpnt */
-	au_plink_maint(mntpnt);
 	err = au_proc_getmntent(mntpnt, &ent);
 	if (err)
 		AuFin("no such mount point");
@@ -129,7 +127,6 @@ static void update_mtab(FILE *fp, char *mntpnt, int do_remount, int do_verbose)
 		append_mtab(fp, ofp, &ent);
 
 	endmntent(ofp); /* ignore */
-	au_plink_maint(NULL);
 	if (do_verbose)
 		au_print_ent(&ent);
 }
