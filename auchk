@@ -29,28 +29,57 @@ f=/etc/default/aufs
 
 Usage()
 {
-	echo $0 writable_branch '[...]'
+	cat <<- EOF
+	$0 [OPTION] writable_branch '[...]'
+	-q | --quiet:
+	-w | --whiteout:
+	-r | --real:
+	-s | --skip:
+	EOF
 }
 
 Pass() # title
 {
 	pass=$(($pass + 1))
-	EEcho \[Pass $pass\] $@
+	test $opt_q -ne 1 && EEcho \[Pass $pass\] $@
+	true
 }
 
 Remove() # file
 {
 	if [ -d "$1" ]
 	then
-		rm -ir "$1" || :
+		if [ $opt_r -eq 1 ]
+		then
+			rm -fvr "$1" || :
+		else
+			rm -ir "$1" || :
+		fi
 	else
 		rm -v "$1" || :
 	fi
 }
 
+opt_q=0
+opt_w=0
+opt_r=0
+opt_s=0
 for i
 do
-	EEcho Checking "$i" for aufs
+	case $(getopt -o qwrs --long quiet,whiteout,real,skip -- $i | sed -e 's/^ *//' -e 's/ --$//' ) in
+	-q|--quiet)	opt_q=1;;
+	-w|--whiteout)	opt_w=1;;
+	-r|--real)	opt_r=1;;
+	-s|--skip)	opt_s=1;;
+	--)		;;
+	*)		break;;
+	esac
+	shift
+done
+
+for i
+do
+	test $opt_q -ne 1 && EEcho Checking "$i" for aufs
 
 	cd "$i"
 	case $(stat -f -c %T .) in
@@ -73,8 +102,16 @@ do
 		test ! -e "$dir/$base" && continue
 
 		ls -ld "$dir/$wh" "$dir/$base"
-		read -p 'Which to remove [whiteout/real/skip]? ' ans \
-			< /dev/tty > /dev/tty 2>&1
+		if [ $opt_w -eq 1 ]
+		then ans=w
+		elif [ $opt_r -eq 1 ]
+		then ans=r
+		elif [ $opt_s -eq 1 ]
+		then ans=s
+		else
+			read -p 'Which to remove [whiteout/real/skip]? ' ans \
+				< /dev/tty > /dev/tty 2>&1
+		fi
 		case "$ans" in
 		[wW]*)	Remove "$dir/$wh" || :;;
 		[rR]*)	Remove "$dir/$base" || :;;
@@ -111,7 +148,7 @@ do
 
 	########################################
 	Pass Remained temp files
-	for tmp in ${AUFS_WH_TMPDIR}/*
+	for tmp in ${AUFS_WH_ORPHDIR}/*
 	do
 		test ! -e "$tmp" && break
 		if [ -d "$tmp" ]
