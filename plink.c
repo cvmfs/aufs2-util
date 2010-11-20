@@ -333,7 +333,7 @@ int au_plink(char cwd[], int cmd, int begin_maint, int end_maint)
 	if (begin_maint) {
 		p = hasmntopt(&ent, "si");
 		if (!p)
-			AuFin("internal error");
+			AuFin("no aufs mount point");
 		strncpy(si, p, sizeof(si));
 		p = strchr(si, ',');
 		if (p)
