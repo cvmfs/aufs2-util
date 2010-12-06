@@ -1,7 +1,7 @@
 /*
  * aufs sample -- ULOOP driver
  *
- * Copyright (C) 2005-2009 Junjiro Okajima
+ * Copyright (C) 2005-2010 Junjiro Okajima
  *
  * This program, aufs is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
-
-/* $Id: libuloop.c,v 1.4 2009/01/26 06:24:34 sfjro Exp $ */
 
 #include <linux/uloop.h>
 

@@ -3,8 +3,6 @@ ULOOP -- Loopback block device in userspace
 (and a sample for HTTP and generic block device)
 Junjiro Okajima
 
-# $Id: 00readme.txt,v 1.6 2008/08/17 23:04:29 sfjro Exp $
-
 
 0. Introduction
 As you know, there is a Loopback block device in Linux, /dev/loop,
