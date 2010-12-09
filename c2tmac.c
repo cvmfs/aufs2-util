@@ -41,9 +41,12 @@ main(int argc, char *argv[])
 	pstr(AUFS_WH_DIROPQ);
 	pstr(AUFS_WH_BASE);
 	pstr(AUFS_WH_PLINKDIR);
-	pint(AUFS_MFS_SECOND_DEF);
+	pint(AUFS_MFS_DEF_SEC);
+	pint(AUFS_MFS_MAX_SEC);
 	pint(AUFS_RDBLK_DEF);
 	pint(AUFS_RDHASH_DEF);
+	pint(AUFS_RDCACHE_DEF);
+	pint(AUFS_RDCACHE_MAX);
 
 	pstr(LibAuEnv);
 	return 0;

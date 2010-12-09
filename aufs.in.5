@@ -1375,11 +1375,13 @@ all are created on the same branch.
 Selects a writable branch which has most free space. In order to keep
 the performance, you can specify the duration (`second') which makes
 aufs hold the index of last selected writable branch until the
-specified seconds expires. The first time you create something in aufs
+specified seconds expires. The seconds is upto \*[AUFS_MFS_MAX_SEC]
+seconds.
+The first time you create something in aufs
 after the specified seconds expired, aufs checks the amount of free
 space of all writable branches by internal statfs call
 and the held branch index will be updated.
-The default value is \*[AUFS_MFS_SECOND_DEF] seconds.
+The default value is \*[AUFS_MFS_DEF_SEC] seconds.
 .
 .TP
 .B create=mfsrr:low[:second]
