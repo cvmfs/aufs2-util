@@ -40,7 +40,8 @@ ${Bin}: LDLIBS = -L. -lautil
 ${BinObj}: %.o: %.c ${LibUtilHdr} ${LibUtil}
 
 ${LibUtilObj}: %.o: %.c ${LibUtilHdr}
-${LibUtil}: ${LibUtil}(${LibUtilObj})
+#${LibUtil}: ${LibUtil}(${LibUtilObj})
+${LibUtil}: $(foreach o, ${LibUtilObj}, ${LibUtil}(${o}))
 .NOTPARALLEL: ${LibUtil}
 
 etc_default_aufs: c2sh aufs.shlib
