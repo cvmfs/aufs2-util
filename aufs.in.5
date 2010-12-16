@@ -82,6 +82,7 @@ You can only see the highest file.
 You will be confused if the added branch has whiteouts (including
 diropq), they may or may not hide the lower entries.
 .\" It is recommended to make sure that the added branch has no whiteout.
+(cf. DIAGNOSTICS).
 
 Even if a process have once mapped a file by mmap(2) with MAP_SHARED
 and the same named file exists on the lower branch,
@@ -1839,6 +1840,42 @@ branch. Since ramfs is simple, it does not set the maximum link count
 originally. In aufs, it is very dangerous, particularly for
 whiteouts. Finally aufs sets the maximum link count for ramfs. The
 value is 32000 which is borrowed from ext2.
+
+After you prepend a branch which already has some entires, aufs may
+report an I/O Error with "brabra should be negative" or something. For
+instance,
+you are going to open(2) a regular file in aufs and write(2) something
+to it. If
+you prepend a branch between open(2) and write(2), and the added branch
+already has a same named entry other than a regular file, then you get a
+conflict.
+.RS
+.Bu
+a regular file FOO exists in aufs.
+.Bu
+open the file FOO.
+.Bu
+add a branch which has FOO but it is a directory, and change the
+permssion of the old branch to RO.
+.Bu
+write to the file FOO.
+.Bu
+aufs tries copying-up FOO to the upper writable branch which was
+recently added.
+.Bu
+aufs finds a directory FOO on the upper branch, and returns an error.
+.RE
+In this situation, aufs keeps returning an error during FOO is cached in
+memory because it remembers that FOO is a regular file instead of a directory.
+When the system discards the cache about FOO, then you will see the
+directory FOO.
+In other words, you will not be able to see the directory FOO on the
+newly added branch during the file FOO on the lower branch is in use.
+This situation may invite more complicated issue. If you unlink(2) the
+opened file FOO, then aufs will create a whiteout on the upper writable
+branch. And you get another conflict which is coexisting a whiteout and
+a real entry on the same branch. In this case, aufs also keeps returning
+an error when you try using FOO.
 
 
 .\" .SH Current Limitation
