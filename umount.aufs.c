@@ -43,7 +43,9 @@ int main(int argc, char *argv[])
 	if (err)
 		AuFin("no such mount point");
 	if (!hasmntopt(&ent, "noplink")) {
-		err = au_plink(mntpnt, AuPlink_FLUSH, 1, 0);
+		err = au_plink(mntpnt, AuPlink_FLUSH,
+			       AuPlinkFlag_OPEN | AuPlinkFlag_CLOEXEC,
+			       /*fd*/NULL);
 		if (err)
 			AuFin(NULL);
 	}

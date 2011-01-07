@@ -61,5 +61,5 @@ int main(int argc, char *argv[])
 	cwd = getcwd(NULL, 0); /* glibc */
 	if (!cwd)
 		AuFin("getcwd");
-	return au_plink(cwd, cmd, 1, 0);
+	return au_plink(cwd, cmd, AuPlinkFlag_OPEN, /*fd*/NULL);
 }

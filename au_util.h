@@ -51,7 +51,10 @@ enum {
 	AuPlink_CPUP,
 	AuPlink_LIST
 };
-int au_plink(char cwd[], int cmd, int begin_maint, int end_maint);
+#define AuPlinkFlag_OPEN	1UL
+#define AuPlinkFlag_CLOEXEC	(1UL << 1)
+#define AuPlinkFlag_CLOSE	(1UL << 2)
+int au_plink(char cwd[], int cmd, unsigned int flags, int *fd);
 
 /* mtab.c */
 void au_print_ent(struct mntent *ent);

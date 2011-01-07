@@ -205,9 +205,9 @@ static int ftw_cpup(const char *fname, const struct stat *st, int flags,
 /* ---------------------------------------------------------------------- */
 
 static int proc_fd = -1;
-static void au_plink_maint(char *si)
+static void au_plink_maint(char *si, int close_on_exec, int *fd)
 {
-	int err;
+	int err, oflags;
 	ssize_t ssz;
 
 	if (si) {
@@ -215,7 +215,10 @@ static void au_plink_maint(char *si)
 			errno = EINVAL;
 			AuFin("proc_fd is not NULL");
 		}
-		proc_fd = open("/proc/" AUFS_PLINK_MAINT_PATH, O_WRONLY);
+		oflags = O_WRONLY;
+		if (close_on_exec)
+			oflags |= O_CLOEXEC;
+		proc_fd = open("/proc/" AUFS_PLINK_MAINT_PATH, oflags);
 		if (proc_fd < 0)
 			AuFin("proc");
 		ssz = write(proc_fd, si, strlen(si));
@@ -227,6 +230,9 @@ static void au_plink_maint(char *si)
 			AuFin("close");
 		proc_fd = -1;
 	}
+
+	if (fd)
+		*fd = proc_fd;
 }
 
 void au_clean_plink(void)
@@ -318,7 +324,7 @@ static int do_plink(char *cwd, int cmd, int nbr, char *br[])
 	return err;
 }
 
-int au_plink(char cwd[], int cmd, int begin_maint, int end_maint)
+int au_plink(char cwd[], int cmd, unsigned int flags, int *fd)
 {
 	int err, nbr;
 	struct mntent ent;
@@ -330,7 +336,7 @@ int au_plink(char cwd[], int cmd, int begin_maint, int end_maint)
 	if (hasmntopt(&ent, "noplink"))
 		goto out; /* success */
 
-	if (begin_maint) {
+	if (flags & AuPlinkFlag_OPEN) {
 		p = hasmntopt(&ent, "si");
 		if (!p)
 			AuFin("no aufs mount point");
@@ -338,7 +344,7 @@ int au_plink(char cwd[], int cmd, int begin_maint, int end_maint)
 		p = strchr(si, ',');
 		if (p)
 			*p = 0;
-		au_plink_maint(si);
+		au_plink_maint(si, flags & AuPlinkFlag_CLOEXEC, fd);
 
 		/* someone else may modify while we were sleeping */
 		err = au_proc_getmntent(cwd, &ent);
@@ -360,8 +366,8 @@ int au_plink(char cwd[], int cmd, int begin_maint, int end_maint)
 	if (err)
 		AuFin(NULL);
 
-	if (end_maint)
-		au_plink_maint(NULL);
+	if (flags & AuPlinkFlag_CLOSE)
+		au_plink_maint(NULL, 0, fd);
 
 out:
 	return err;

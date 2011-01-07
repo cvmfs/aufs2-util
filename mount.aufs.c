@@ -146,7 +146,7 @@ static void do_mount(char *dev, char *mntpnt, int argc, char *argv[],
 
 int main(int argc, char *argv[])
 {
-	int err, c, status;
+	int err, c, status, fd;
 	pid_t pid;
 	unsigned char flags[LastOpt];
 	struct mntent ent;
@@ -213,13 +213,16 @@ int main(int argc, char *argv[])
 			AuFin(MTab);
 	}
 
+	fd = -1;
 	if (flags[Remount]) {
 		errno = EINVAL;
 		if (flags[Bind])
 			AuFin("both of remount and bind are specified");
 		flags[AuFlush] = test_flush(opts);
 		if (flags[AuFlush] /* && !flags[Fake] */) {
-			err = au_plink(cwd, AuPlink_FLUSH, 1, 0);
+			err = au_plink(cwd, AuPlink_FLUSH,
+				       AuPlinkFlag_OPEN | AuPlinkFlag_CLOEXEC,
+				       &fd);
 			if (err)
 				AuFin(NULL);
 		}
@@ -233,6 +236,8 @@ int main(int argc, char *argv[])
 	} else if (pid < 0)
 		AuFin("fork");
 
+	if (fd >= 0)
+		close(fd); /* ignore */
 	err = waitpid(pid, &status, 0);
 	if (err < 0)
 		AuFin("child process");
