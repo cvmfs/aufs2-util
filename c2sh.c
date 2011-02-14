@@ -30,6 +30,7 @@ main(int argc, char *argv[])
 	pstr(AUFS_VERSION);
 	pint(AUFS_SUPER_MAGIC);
 	printf("AUFS_SUPER_MAGIC_HEX=0x%x\n", AUFS_SUPER_MAGIC);
+	pint(AUFS_ROOT_INO);
 	pstr(AUFS_WH_PFX);
 	pstr(AUFS_WH_PFX2);
 	pint(AUFS_MAX_NAMELEN);
