@@ -104,7 +104,8 @@ will see whiteout-base or whplink-dir on the added RO branch.
 
 If a process is referencing the file/directory on the deleting branch
 (by open, mmap, current working directory, etc.), aufs will return an
-error EBUSY.
+error EBUSY. In this case, a script `aubusy' (in aufs2-util.git) is
+useful to identify which process (and which file) makes the branch busy.
 .
 .TP
 .B mod:BRANCH

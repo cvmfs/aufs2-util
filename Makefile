@@ -18,10 +18,10 @@
 CFLAGS += -I./libau
 CFLAGS += -O -Wall
 
-Cmd = auchk aubrsync
+Cmd = aubusy auchk aubrsync
 Man = aufs.5
 Etc = etc_default_aufs
-Bin = auplink mount.aufs umount.aufs #auctl
+Bin = auibusy auplink mount.aufs umount.aufs #auctl
 BinObj = $(addsuffix .o, ${Bin})
 LibUtil = libautil.a
 LibUtilObj = proc_mnt.o br.o plink.o mtab.o
@@ -66,9 +66,9 @@ aufs.5: aufs.in.5 c2tmac
 .INTERMEDIATE: c2sh c2tmac ver
 
 Install = install -o root -g root -p
-install_sbin: File = mount.aufs umount.aufs auplink
+install_sbin: File = auibusy auplink mount.aufs umount.aufs
 install_sbin: Tgt = ${DESTDIR}/sbin
-install_ubin: File = auchk aubrsync #auctl
+install_ubin: File = aubusy auchk aubrsync #auctl
 install_ubin: Tgt = ${DESTDIR}/usr/bin
 install_sbin install_ubin: ${File}
 	install -d ${Tgt}
