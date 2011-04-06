@@ -110,7 +110,7 @@ static void do_mount(char *dev, char *mntpnt, int argc, char *argv[],
 		     unsigned char flags[])
 {
 	int i;
-	const int ac = argc + 6;
+	const int ac = argc + 7;
 	char *av[ac], **a;
 
 	/* todo: eliminate the duplicated options */
@@ -127,7 +127,9 @@ static void do_mount(char *dev, char *mntpnt, int argc, char *argv[],
 	*a++ = AUFS_NAME;
 
 	for (i = 3; i < argc; i++)
-		if (strcmp(argv[i], "-v") && strcmp(argv[i], "-n"))
+		if (strcmp(argv[i], "-f")
+		    && strcmp(argv[i], "-n")
+		    && strcmp(argv[i], "-v"))
 			*a++ = argv[i];
 	*a++ = dev;
 	*a++ = mntpnt;
