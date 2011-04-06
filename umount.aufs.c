@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
 		av[i++] = argv[j];
 	av[i++] = mntpnt;
 	av[i++] = NULL;
-	execvp("umount", av);
+	execvp(MOUNT_CMD_PATH "umount", av);
 
 out:
 	AuFin("umount");

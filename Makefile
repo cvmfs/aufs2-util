@@ -18,6 +18,26 @@
 CFLAGS += -I./libau
 CFLAGS += -O -Wall
 
+# MountCmdPath: dirty trick to support local nfs-mount.
+# - on a single host, mount aufs, export it via nfs, and mount it again
+#   via nfs locally.
+# in this situation, a deadlock MAY happen between the aufs branch
+# management and nfsd.
+# - mount.aufs enters the pseudo-link maintenance mode which prohibits
+#   all processes acess to the aufs mount except its children.
+# - mount.aufs calls execvp(3) to execute mount(8).
+# - then nfsd MAY searches mount(8) under the nfs-mounted aufs which is
+#   already prohibited.
+# the search behaviour is highly depending upon the system environment,
+# but if we specify the path of mount(8) we can keep it from the
+# deadlock.
+
+ifdef MountCmdPath
+override CPPFLAGS += -DMOUNT_CMD_PATH=\"${MountCmdPath}/\"
+else
+override CPPFLAGS += -DMOUNT_CMD_PATH=\"\"
+endif
+
 Cmd = aubusy auchk aubrsync
 Man = aufs.5
 Etc = etc_default_aufs
