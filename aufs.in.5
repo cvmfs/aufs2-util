@@ -1457,6 +1457,11 @@ writable branch.
 The branch filesystems must be accessible, which means `not hidden.'
 It means you need to `mount \-\-move' when you use initramfs and
 switch_root(8), or chroot(8).
+.Bu
+Since aufs has several filename prefixes reserved, the maxmum filename
+length is shorter than ordinary 255. Actually \*[AUFS_MAX_NAMELEN]
+(defined as ${AUFS_MAX_NAMELEN}). This
+value should be specified as `namlen=' when you mount NFS.
 .RE
 
 
