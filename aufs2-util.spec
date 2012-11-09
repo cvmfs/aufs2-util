@@ -9,6 +9,7 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires: gcc
 BuildRequires: make
+BuildRequires: glibc-static
 BuildRequires: coreutils
 BuildRequires: sed
 BuildRequires: binutils
