@@ -13,7 +13,7 @@ BuildRequires: glibc-static
 BuildRequires: coreutils
 BuildRequires: sed
 BuildRequires: binutils
-BuildRequires: kernel-aufs21-devel
+BuildRequires: kernel-aufs21-headers
 Requires: kernel-aufs21
 
 %description
