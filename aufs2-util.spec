@@ -1,7 +1,7 @@
 Summary: aufs2 user space utilities
 Name: aufs2-util
 Version: 2.1
-Release: 1
+Release: 2
 Source0: %{name}-%{version}.tar.gz
 Group: Applications/System
 License: GPL
@@ -14,7 +14,7 @@ BuildRequires: coreutils
 BuildRequires: sed
 BuildRequires: binutils
 BuildRequires: kernel-aufs21-headers
-Requires: kernel-aufs21
+#Requires: kernel-aufs21
 
 %description
 User space utilities for aufs2 kernel module (union file system).
@@ -49,6 +49,8 @@ rm -rf $RPM_BUILD_ROOT
 /usr/share/man/man5/aufs.5.gz
 
 %changelog
+* Wed Jun 19 2013 Jakob Blomer <jblomer@cern.ch>
+- Remove kernel-aufs21 dependency
 * Fri Nov 09 2012 Jakob Blomer <jblomer@cern.ch>
 - Initial Package
 
